@@ -3,7 +3,7 @@ import setuptools
 
 
 setuptools.setup(
-    name="jinahub",
+    name="encoder-image-torch",
     version="0.0.1",
     author='Jina Dev Team',
     author_email='dev-team@jina.ai',
@@ -14,5 +14,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=find_packages(where='.', include=['jinahub.*']),
+    install_requires=open("jinahub/image_encoder/requirements.txt").readlines(),
     python_requires=">=3.7"
 )
