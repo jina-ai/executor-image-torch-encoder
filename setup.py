@@ -14,6 +14,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     packages=find_packages(where='.', include=['jinahub.*']),
-    install_requires=open("jinahub/image_encoder/requirements.txt").readlines(),
+    install_requires=open("requirements.txt").readlines(),
     python_requires=">=3.7"
 )
