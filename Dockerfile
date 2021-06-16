@@ -1,10 +1,13 @@
-FROM jinaai/jina:2.0.0
+FROM jinaai/jina:master as base
 
-# install the third-party requirements
-RUN apt-get update && apt-get install --no-install-recommends -y gcc build-essential
+COPY . ./image_torch_encoder/
+WORKDIR ./image_torch_encoder
 
-# setup the workspace
-COPY jinahub/image_encoder /workspace
-WORKDIR /workspace
+RUN pip install .
 
-ENTRYPOINT ["jina", "pod", "--uses", "config.yml"]
+FROM base
+RUN pip install -r tests/requirements.txt
+RUN pytest tests
+
+FROM base
+ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]

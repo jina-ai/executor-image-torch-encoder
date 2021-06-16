@@ -1,6 +1,8 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
+import os
+from typing import Optional, List
 
 import numpy as np
 
@@ -8,6 +10,7 @@ from jina import Executor, requests, DocumentArray
 
 import torch
 import torchvision.models as models
+from torch.hub import load_state_dict_from_url
 
 
 class ImageTorchEncoder(Executor):
@@ -34,16 +37,22 @@ class ImageTorchEncoder(Executor):
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
+    DEFAULT_TRAVERSAL_PATH = ['r']
 
     def __init__(
         self,
         model_name: str = 'mobilenet_v2',
         pool_strategy: str = 'mean',
         channel_axis: int = 1,
+        load_pre_trained_from_path: Optional[str] = None,
+        default_traversal_path: Optional[List[str]] = None,
         *args,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
+        self.default_traversal_path = self.DEFAULT_TRAVERSAL_PATH if default_traversal_path is None\
+            else default_traversal_path
+
         self.channel_axis = channel_axis
         # axis 0 is the batch
         self._default_channel_axis = 1
@@ -51,6 +60,13 @@ class ImageTorchEncoder(Executor):
         if pool_strategy not in ('mean', 'max'):
             raise NotImplementedError(f'unknown pool_strategy: {self.pool_strategy}')
         self.pool_strategy = pool_strategy
+
+        if load_pre_trained_from_path:
+            # set env var as described in https://pytorch.org/vision/stable/models.html
+            model = getattr(models, self.model_name)(pretrained=False)
+            model.load_state_dict(torch.load(load_pre_trained_from_path))
+
+
         model = getattr(models, self.model_name)(pretrained=True)
         self.model = model.features.eval()
         self.model.to(torch.device('cpu'))
@@ -66,18 +82,23 @@ class ImageTorchEncoder(Executor):
         return self.pool_fn(feature_map, axis=(2, 3))
 
     @requests
+    # TODO: per request traversal path
+    # TODO: add batching
     def encode(self, docs: DocumentArray, **kwargs):
-        images = np.stack(docs.get_attributes('blob'))
+        chunks = DocumentArray(
+            docs.traverse_flat(self.default_traversal_path)
+        )
+        images = np.stack(chunks.get_attributes('blob'))
         images = self._maybe_move_channel_axis(images)
 
         _input = torch.from_numpy(images)
         features = self._get_features(_input).detach()
         features = self._get_pooling(features.numpy())
 
-        for doc, embed in zip(docs, features):
+        for doc, embed in zip(chunks, features):
             doc.embedding = embed
 
-        return docs
+        return chunks
 
     def _maybe_move_channel_axis(self, images) -> 'np.ndarray':
         if self.channel_axis != self._default_channel_axis:

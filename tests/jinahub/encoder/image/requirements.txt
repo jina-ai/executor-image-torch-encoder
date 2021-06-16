@@ -1,3 +1,0 @@
-pytest==6.2.4
-jina==2.0.0rc5.dev63
-torchvision==0.8.2

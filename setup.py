@@ -1,19 +1,19 @@
-from setuptools import find_packages
 import setuptools
 
 
 setuptools.setup(
-    name="encoder-image-torch",
-    version="0.0.1",
+    name="executor-image-torch-encoder",
+    version="2.0",
     author='Jina Dev Team',
     author_email='dev-team@jina.ai',
-    description="Executor encodes images into d-dimensional vector space using neural network.",
-    url="https://github.com/jina-ai/encoder-image-torch",
+    description="Executor that encodes images into latent space using PyTorch hosted neural networks",
+    url="https://github.com/jina-ai/executor-image-torch-encoder",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    packages=find_packages(where='.', include=['jinahub.*']),
+    py_modules=['jinahub.image.encoder'],
+    package_dir={'jinahub.image': '.'},
     install_requires=open("requirements.txt").readlines(),
-    python_requires=">=3.7"
+    python_requires=">=3.7",
 )
