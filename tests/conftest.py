@@ -9,7 +9,6 @@ import torch
 import numpy as np
 from torchvision.models.mobilenet import model_urls
 from PIL import Image
-from glob import glob
 
 from jina import DocumentArray, Document
 
