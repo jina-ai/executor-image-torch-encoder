@@ -3,4 +3,4 @@ with:
   {}
 metas:
   py_modules:
-    - image_torch_encoder.py
+    - encoder.py

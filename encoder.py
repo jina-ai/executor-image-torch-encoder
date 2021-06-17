@@ -2,7 +2,7 @@ __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
 import os
-from typing import Optional, List
+from typing import Optional, List, Dict, Any, Iterable
 
 import numpy as np
 
@@ -11,6 +11,11 @@ from jina import Executor, requests, DocumentArray
 import torch
 import torchvision.models as models
 from torch.hub import load_state_dict_from_url
+
+
+def _batch_generator(data: List[Any], batch_size: int):
+    for i in range(0, len(data), batch_size):
+        yield data[i:min(i + batch_size, len(data))]
 
 
 class ImageTorchEncoder(Executor):
@@ -37,19 +42,27 @@ class ImageTorchEncoder(Executor):
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
-    DEFAULT_TRAVERSAL_PATH = ['r']
+    DEFAULT_TRAVERSAL_PATH = 'r'
 
     def __init__(
         self,
         model_name: str = 'mobilenet_v2',
         pool_strategy: str = 'mean',
         channel_axis: int = 1,
+        device: Optional[str] = None,
         load_pre_trained_from_path: Optional[str] = None,
-        default_traversal_path: Optional[List[str]] = None,
+        default_traversal_path: Optional[str] = None,
+        default_batch_size: Optional[int] = 32,
         *args,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
+
+        if not device:
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = device
+        self.default_batch_size = default_batch_size
+
         self.default_traversal_path = self.DEFAULT_TRAVERSAL_PATH if default_traversal_path is None\
             else default_traversal_path
 
@@ -65,9 +78,9 @@ class ImageTorchEncoder(Executor):
             # set env var as described in https://pytorch.org/vision/stable/models.html
             model = getattr(models, self.model_name)(pretrained=False)
             model.load_state_dict(torch.load(load_pre_trained_from_path))
+        else:
+            model = getattr(models, self.model_name)(pretrained=True)
 
-
-        model = getattr(models, self.model_name)(pretrained=True)
         self.model = model.features.eval()
         self.model.to(torch.device('cpu'))
         if self.pool_strategy is not None:
@@ -82,25 +95,36 @@ class ImageTorchEncoder(Executor):
         return self.pool_fn(feature_map, axis=(2, 3))
 
     @requests
-    # TODO: per request traversal path
-    # TODO: add batching
-    def encode(self, docs: DocumentArray, **kwargs):
-        chunks = DocumentArray(
-            docs.traverse_flat(self.default_traversal_path)
-        )
-        images = np.stack(chunks.get_attributes('blob'))
-        images = self._maybe_move_channel_axis(images)
+    def encode(self, docs: Optional[DocumentArray], parameters: Optional[Dict] = None, **kwargs):
+        if docs:
+            docs_batch_generator = self._get_docs_batch_generator(docs, parameters)
+            self._compute_embeddings(docs_batch_generator)
 
-        _input = torch.from_numpy(images)
-        features = self._get_features(_input).detach()
-        features = self._get_pooling(features.numpy())
-
-        for doc, embed in zip(chunks, features):
-            doc.embedding = embed
-
-        return chunks
-
-    def _maybe_move_channel_axis(self, images) -> 'np.ndarray':
+    def _maybe_move_channel_axis(self, images: np.ndarray) -> 'np.ndarray':
         if self.channel_axis != self._default_channel_axis:
             images = np.moveaxis(images, self.channel_axis, self._default_channel_axis)
         return images
+
+    def _get_docs_batch_generator(self, docs: DocumentArray, parameters: Dict):
+        traversal_path = parameters.get('traversal_path', self.default_traversal_path)
+        batch_size = parameters.get('batch_size', self.default_batch_size)
+
+        flat_docs = docs.traverse_flat(traversal_path)
+
+        filtered_docs = [doc for doc in flat_docs if doc is not None and doc.blob is not None]
+
+        return _batch_generator(filtered_docs, batch_size)
+
+    def _compute_embeddings(self, docs_batch_generator: Iterable) -> None:
+        with torch.no_grad():
+            for document_batch in docs_batch_generator:
+                blob_batch = np.stack([d.blob for d in document_batch])
+                images = self._maybe_move_channel_axis(blob_batch)
+                tensor = torch.from_numpy(images)
+                tensor = tensor.to(self.device)
+                features = self._get_features(tensor).detach()
+                features = self._get_pooling(features.numpy())
+
+                for doc, embed in zip(document_batch, features):
+                    doc.embedding = embed
+
