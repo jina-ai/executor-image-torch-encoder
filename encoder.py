@@ -39,6 +39,11 @@ class ImageTorchEncoder(Executor):
             the model will be a 2D tensor.
         - `max`: Means that global max pooling will be applied.
     :param channel_axis: The axis of the color channel, default is 1
+    :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
+    :param load_pre_trained_from_path: Loads your own model weights form the path. If not provided, the default
+           model will be downloaded from torch hub.
+    :param default_traversal_path: Used in the encode method an define traversal on the received `DocumentArray`
+    :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """

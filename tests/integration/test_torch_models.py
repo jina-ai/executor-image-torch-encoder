@@ -1,11 +1,10 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Dict
+from typing import Dict
 
 import pytest
 
-import torch
 import numpy as np
 from jina import DocumentArray, Document
 

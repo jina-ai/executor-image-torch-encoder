@@ -84,7 +84,6 @@ def test_encode_image_returns_correct_length(traversal_path: str, docs: Document
 
 
 def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
-    # encoder = ImageTorchEncoder(channel_axis=3, model_name='squeezenet1_0')
     encoder = ImageTorchEncoder(channel_axis=3, model_name='resnet50')
 
     embeddings = {}
