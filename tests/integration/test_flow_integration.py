@@ -17,7 +17,7 @@ import numpy as np
     (np.ones((3, 100, 100), dtype=np.float32)),
     (np.ones((3, 50, 40), dtype=np.float32))
 ])
-def test_clip_no_batch(arr_in: np.ndarray):
+def test_no_batch(arr_in: np.ndarray):
     def validate_callback(resp):
         results_arr = DocumentArray(resp.data.docs)
         assert len(results_arr) == 1
@@ -33,7 +33,7 @@ def test_clip_no_batch(arr_in: np.ndarray):
         )
 
 
-def test_clip_batch():
+def test_with_batch():
     def validate_callback(resp):
         assert 25 == len(resp.docs.get_attributes('embedding'))
 
