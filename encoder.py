@@ -80,7 +80,6 @@ class ImageTorchEncoder(Executor):
         self.pool_strategy = pool_strategy
 
         if load_pre_trained_from_path:
-            # set env var as described in https://pytorch.org/vision/stable/models.html
             model = getattr(models, self.model_name)(pretrained=False)
             model.load_state_dict(torch.load(load_pre_trained_from_path))
         else:
