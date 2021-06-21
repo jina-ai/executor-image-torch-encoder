@@ -10,7 +10,6 @@ from jina import Executor, requests, DocumentArray
 
 import torch
 import torchvision.models as models
-from torch.hub import load_state_dict_from_url
 
 
 def _batch_generator(data: List[Any], batch_size: int):
