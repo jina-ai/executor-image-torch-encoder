@@ -84,13 +84,14 @@ def test_encode_image_returns_correct_length(traversal_path: str, docs: Document
 
 
 def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
-    encoder = ImageTorchEncoder(channel_axis=3)
+    # encoder = ImageTorchEncoder(channel_axis=3, model_name='squeezenet1_0')
+    encoder = ImageTorchEncoder(channel_axis=3, model_name='resnet50')
 
     embeddings = {}
     for name, image_arr in test_images.items():
         docs = DocumentArray([Document(blob=image_arr)])
         encoder.encode(docs, parameters={})
-        embeddings[name] = docs[0].blob
+        embeddings[name] = docs[0].embedding
 
     def dist(a, b):
         a_embedding = embeddings[a]
@@ -106,4 +107,4 @@ def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
     assert small_distance < dist('banana2', 'studio')
     assert small_distance < dist('airplane', 'studio')
     assert small_distance < dist('airplane', 'satellite')
-    # assert small_distance < dist('studio', 'satellite')
+    assert small_distance < dist('studio', 'satellite')

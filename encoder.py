@@ -9,6 +9,7 @@ import numpy as np
 from jina import Executor, requests, DocumentArray
 
 import torch
+import torch.nn as nn
 import torchvision.models as models
 
 
@@ -80,10 +81,21 @@ class ImageTorchEncoder(Executor):
         else:
             model = getattr(models, self.model_name)(pretrained=True)
 
-        self.model = model.features.eval()
+        self._extract_feature_from_torch_module(model)
         self.model.to(torch.device('cpu'))
         if self.pool_strategy is not None:
             self.pool_fn = getattr(np, self.pool_strategy)
+
+    def _extract_feature_from_torch_module(self, model: nn.Module):
+        # TODO: Find better way to extract the correct layer from the torch model.
+        if hasattr(model, 'features'):
+            self.model = model.features.eval()
+        elif hasattr(model, 'fc'):
+            self.model = model.eval()
+        elif hasattr(model, 'layers'):
+            self.model = model.layers.eval()
+        else:
+            raise ValueError(f'Model {model.__class__.__name__} is currently not supported by the ImageTorchEncoder')
 
     def _get_features(self, content):
         return self.model(content)
