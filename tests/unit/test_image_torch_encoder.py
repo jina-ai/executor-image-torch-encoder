@@ -57,8 +57,19 @@ def test_get_pooling(
     np.testing.assert_array_equal(feature_map_after_pooling, expected_output)
 
 
-def test_get_features() -> None:
+@pytest.mark.skipif(not torch.cuda.is_available(),
+                    reason="requires GPU and CUDA")
+def test_get_features_gpu() -> None:
     encoder = ImageTorchEncoder()
+    arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
+
+    encodings = encoder._get_features(torch.from_numpy(arr_in).to(encoder.device)).detach().cpu().numpy()
+
+    assert encodings.shape == (2, 1280, 1, 1)
+
+
+def test_get_features_cpu() -> None:
+    encoder = ImageTorchEncoder(device='cpu')
     arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
 
     encodings = encoder._get_features(torch.from_numpy(arr_in)).detach().numpy()

@@ -7,7 +7,7 @@ from typing import Dict
 import pytest
 import torch
 import numpy as np
-from torchvision.models.mobilenet import model_urls
+from torchvision.models.mobilenetv2 import model_urls
 from PIL import Image
 
 from jina import DocumentArray, Document

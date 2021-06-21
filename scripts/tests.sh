@@ -13,7 +13,9 @@ source .venv/bin/activate
 pip install wheel
 pip install -r tests/requirements.txt
 pip install .
-pytest -s -v tests/
+# Need to run both test folders separately because of CUDA GPU issue
+# https://github.com/pytorch/pytorch/issues/40403
+pytest -s -v tests/unit/ && pytest -s -v tests/integration/
 local_exit_code=$?
 deactivate
 

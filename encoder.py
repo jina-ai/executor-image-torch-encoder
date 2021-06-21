@@ -82,7 +82,7 @@ class ImageTorchEncoder(Executor):
             model = getattr(models, self.model_name)(pretrained=True)
 
         self._extract_feature_from_torch_module(model)
-        self.model.to(torch.device('cpu'))
+        self.model.to(torch.device(self.device))
         if self.pool_strategy is not None:
             self.pool_fn = getattr(np, self.pool_strategy)
 
@@ -134,7 +134,7 @@ class ImageTorchEncoder(Executor):
                 tensor = torch.from_numpy(images)
                 tensor = tensor.to(self.device)
                 features = self._get_features(tensor).detach()
-                features = self._get_pooling(features.numpy())
+                features = self._get_pooling(features.cpu().numpy())
 
                 for doc, embed in zip(document_batch, features):
                     doc.embedding = embed
