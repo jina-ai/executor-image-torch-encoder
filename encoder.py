@@ -85,7 +85,7 @@ class ImageTorchEncoder(Executor):
         else:
             model = getattr(models, self.model_name)(pretrained=True)
 
-        self._extract_feature_from_torch_module(model)
+        self.model = self._extract_feature_from_torch_module(model)
         self.model.to(torch.device(self.device))
         if self.pool_strategy is not None:
             self.pool_fn = getattr(np, self.pool_strategy)
@@ -93,11 +93,11 @@ class ImageTorchEncoder(Executor):
     def _extract_feature_from_torch_module(self, model: nn.Module):
         # TODO: Find better way to extract the correct layer from the torch model.
         if hasattr(model, 'features'):
-            self.model = model.features.eval()
+            return model.features.eval()
         elif hasattr(model, 'fc'):
-            self.model = model.eval()
+            return model.eval()
         elif hasattr(model, 'layers'):
-            self.model = model.layers.eval()
+            return model.layers.eval()
         else:
             raise ValueError(f'Model {model.__class__.__name__} is currently not supported by the ImageTorchEncoder')
 
