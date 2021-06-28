@@ -4,17 +4,15 @@ __license__ = "Apache-2.0"
 from typing import Optional, List, Dict, Any, Iterable
 
 import numpy as np
-
-from jina import Executor, requests, DocumentArray
-
 import torch
 import torch.nn as nn
 import torchvision.models as models
+from jina import Executor, requests, DocumentArray
 
 
 def _batch_generator(data: List[Any], batch_size: int):
     for i in range(0, len(data), batch_size):
-        yield data[i:min(i + batch_size, len(data))]
+        yield data[i: i + batch_size]
 
 
 class ImageTorchEncoder(Executor):
