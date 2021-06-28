@@ -132,8 +132,7 @@ class ImageTorchEncoder(Executor):
             for document_batch in docs_batch_generator:
                 blob_batch = np.stack([d.blob for d in document_batch])
                 images = self._maybe_move_channel_axis(blob_batch)
-                tensor = torch.from_numpy(images)
-                tensor = tensor.to(self.device)
+                tensor = torch.from_numpy(images).to(self.device)
                 features = self._get_features(tensor).detach()
                 features = self._get_pooling(features.cpu().numpy())
 
