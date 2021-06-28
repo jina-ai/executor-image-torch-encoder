@@ -44,7 +44,6 @@ class ImageTorchEncoder(Executor):
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
-    DEFAULT_TRAVERSAL_PATH = 'r'
 
     def __init__(
         self,
@@ -65,8 +64,10 @@ class ImageTorchEncoder(Executor):
         self.device = device
         self.default_batch_size = default_batch_size
 
-        self.default_traversal_path = self.DEFAULT_TRAVERSAL_PATH if default_traversal_path is None\
-            else default_traversal_path
+        if default_traversal_path is None:
+            self.default_traversal_path = ['r']
+        else:
+            self.default_traversal_path = default_traversal_path
 
         self.channel_axis = channel_axis
         # axis 0 is the batch
