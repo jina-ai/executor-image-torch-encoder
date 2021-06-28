@@ -58,8 +58,8 @@ def test_get_pooling(
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(),
-                    reason="requires GPU and CUDA")
-def test_get_features_gpu() -> None:
+                    reason='requires GPU and CUDA')
+def test_get_features_gpu():
     encoder = ImageTorchEncoder()
     arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
 
@@ -68,7 +68,7 @@ def test_get_features_gpu() -> None:
     assert encodings.shape == (2, 1280, 1, 1)
 
 
-def test_get_features_cpu() -> None:
+def test_get_features_cpu():
     encoder = ImageTorchEncoder(device='cpu')
     arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
 
@@ -84,7 +84,7 @@ def test_get_features_cpu() -> None:
         ('c', pytest.lazy_fixture('docs_with_chunk_blobs'))
     ]
 )
-def test_encode_image_returns_correct_length(traversal_path: str, docs: DocumentArray) -> None:
+def test_encode_image_returns_correct_length(traversal_path: str, docs: DocumentArray):
     encoder = ImageTorchEncoder(default_traversal_path=traversal_path)
 
     encoder.encode(docs=docs, parameters={})
