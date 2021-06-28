@@ -80,11 +80,11 @@ def test_get_features_cpu():
 @pytest.mark.parametrize(
     'traversal_path, docs',
     [
-        ('r', pytest.lazy_fixture('docs_with_blobs')),
-        ('c', pytest.lazy_fixture('docs_with_chunk_blobs'))
+        (['r'], pytest.lazy_fixture('docs_with_blobs')),
+        (['c'], pytest.lazy_fixture('docs_with_chunk_blobs'))
     ]
 )
-def test_encode_image_returns_correct_length(traversal_path: str, docs: DocumentArray):
+def test_encode_image_returns_correct_length(traversal_path, docs):
     encoder = ImageTorchEncoder(default_traversal_path=traversal_path)
 
     encoder.encode(docs=docs, parameters={})

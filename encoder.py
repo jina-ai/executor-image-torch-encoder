@@ -52,7 +52,7 @@ class ImageTorchEncoder(Executor):
         channel_axis: int = 1,
         device: Optional[str] = None,
         load_pre_trained_from_path: Optional[str] = None,
-        default_traversal_path: Optional[str] = None,
+        default_traversal_path: Optional[List[str]] = None,
         default_batch_size: Optional[int] = 32,
         *args,
         **kwargs
