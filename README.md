@@ -1,6 +1,6 @@
 # ✨ ImageTorchEncoder
 
-**ImageTorchEncoder** encodes `Document` content from a ndarray, potentially B x (Channel x Height x Width) into a ndarray of B x D.  
+**ImageTorchEncoder** encodes `Document` content from a ndarray, potentially B x (Height x Width x Channel) into a ndarray of B x D.  
 Internally, **ImageTorchEncoder** wraps the models from [torchvision](https://pytorch.org/vision/stable/index.html).
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->

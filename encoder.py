@@ -18,7 +18,7 @@ def _batch_generator(data: List[Any], batch_size: int):
 class ImageTorchEncoder(Executor):
     """
     :class:`ImageTorchEncoder` encodes ``Document`` content from a ndarray,
-    potentially B x (Channel x Height x Width) into a ndarray of `B x D`.
+    potentially B x (Height x Width x Channel) into a ndarray of `B x D`.
     Where B` is the batch size and `D` is the Dimension.
     Internally, :class:`ImageTorchEncoder` wraps the models from `
     `torchvision.models`.
