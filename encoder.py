@@ -76,6 +76,7 @@ class ImageTorchEncoder(Executor):
         if pool_strategy not in ('mean', 'max'):
             raise NotImplementedError(f'unknown pool_strategy: {self.pool_strategy}')
         self.pool_strategy = pool_strategy
+        self.pool_fn = getattr(np, self.pool_strategy)
 
         if load_pre_trained_from_path:
             model = getattr(models, self.model_name)(pretrained=False)
@@ -85,8 +86,6 @@ class ImageTorchEncoder(Executor):
 
         self.model = self._extract_feature_from_torch_module(model)
         self.model.to(torch.device(self.device))
-        if self.pool_strategy is not None:
-            self.pool_fn = getattr(np, self.pool_strategy)
 
     def _extract_feature_from_torch_module(self, model: nn.Module):
         # TODO: Find better way to extract the correct layer from the torch model.
