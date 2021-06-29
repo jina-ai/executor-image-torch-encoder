@@ -56,8 +56,8 @@ def test_get_pooling(
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(),
-                    reason="requires GPU and CUDA")
-def test_get_features_gpu() -> None:
+                    reason='requires GPU and CUDA')
+def test_get_features_gpu():
     encoder = ImageTorchEncoder()
     arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
 
@@ -66,7 +66,7 @@ def test_get_features_gpu() -> None:
     assert encodings.shape == (2, 1280, 1, 1)
 
 
-def test_get_features_cpu() -> None:
+def test_get_features_cpu():
     encoder = ImageTorchEncoder(device='cpu')
     arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
 
@@ -94,8 +94,8 @@ def test_encode_image_returns_correct_length(traversal_path: str, docs: Document
 
 def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
     encoder = ImageTorchEncoder(model_name='resnet50')
-
     embeddings = {}
+
     for name, image_arr in test_images.items():
         docs = DocumentArray([Document(blob=image_arr)])
         encoder.encode(docs, parameters={})

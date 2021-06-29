@@ -5,12 +5,11 @@ from typing import Optional, List, Dict, Any, Iterable
 
 import numpy as np
 
-from jina import Executor, requests, DocumentArray
-
+import torchvision.transforms as T
 import torch
 import torch.nn as nn
 import torchvision.models as models
-import torchvision.transforms as T
+from jina import Executor, requests, DocumentArray
 
 
 def _batch_generator(data: List[Any], batch_size: int):
@@ -22,7 +21,7 @@ class ImageTorchEncoder(Executor):
     """
     :class:`ImageTorchEncoder` encodes ``Document`` content from a ndarray,
     B x (Height x Width x Channel) into a ndarray of `B x D`.
-    Where B` is the batch size and `D` is the Dimension.
+    Where `B` is the batch size and `D` is the Dimension.
     Internally, :class:`ImageTorchEncoder` wraps the models from `
     `torchvision.models`.
     https://pytorch.org/docs/stable/torchvision/models.html
@@ -54,7 +53,7 @@ class ImageTorchEncoder(Executor):
         pool_strategy: str = 'mean',
         device: Optional[str] = None,
         load_pre_trained_from_path: Optional[str] = None,
-        default_traversal_path: Optional[str] = None,
+        default_traversal_path: Optional[List[str]] = None,
         default_batch_size: Optional[int] = 32,
         *args,
         **kwargs
@@ -66,8 +65,7 @@ class ImageTorchEncoder(Executor):
         self.device = device
         self.default_batch_size = default_batch_size
 
-        self.default_traversal_path = self.DEFAULT_TRAVERSAL_PATH if default_traversal_path is None\
-            else default_traversal_path
+        self.default_traversal_path = default_traversal_path or self.DEFAULT_TRAVERSAL_PATH
 
         # axis 0 is the batch
         self._default_channel_axis = 1
@@ -75,6 +73,7 @@ class ImageTorchEncoder(Executor):
         if pool_strategy not in ('mean', 'max'):
             raise NotImplementedError(f'unknown pool_strategy: {self.pool_strategy}')
         self.pool_strategy = pool_strategy
+        self.pool_fn = getattr(np, self.pool_strategy)
 
         if load_pre_trained_from_path:
             model = getattr(models, self.model_name)(pretrained=False)
@@ -143,8 +142,7 @@ class ImageTorchEncoder(Executor):
                 blob_batch = np.stack([d.blob for d in document_batch])
                 preprocessed_batch = self._preprocess_image(blob_batch)
                 images = self._maybe_move_channel_axis(preprocessed_batch)
-                tensor = torch.from_numpy(images)
-                tensor = tensor.to(self.device)
+                tensor = torch.from_numpy(images).to(self.device)
                 features = self._get_features(tensor).detach()
                 features = self._get_pooling(features.cpu().numpy())
 
@@ -154,4 +152,3 @@ class ImageTorchEncoder(Executor):
     def _preprocess_image(self, images: List[np.array]):
         batch = np.stack(images)
         return self._preprocess(batch)
-

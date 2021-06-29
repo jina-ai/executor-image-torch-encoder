@@ -59,6 +59,7 @@ def test_traversal_path(docs: DocumentArray, docs_per_path: List[List[str]], tra
         return validate
 
     flow = Flow(return_results=True).add(uses=ImageTorchEncoder)
+
     with flow:
         resp = flow.post(
             on='/test',

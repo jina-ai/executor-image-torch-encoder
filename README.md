@@ -1,6 +1,6 @@
 # ✨ ImageTorchEncoder
 
-**ImageTorchEncoder** encodes `Document` content from a ndarray, potentially B x (Channel x Height x Width) into a ndarray of B x D.  
+**ImageTorchEncoder** encodes `Document` content from a ndarray, B x (Height x Width x Channel) into a ndarray of B x D.  
 Internally, **ImageTorchEncoder** wraps the models from [torchvision](https://pytorch.org/vision/stable/index.html).
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
@@ -22,6 +22,50 @@ The test suite has additional [requirements](tests/requirements.txt).
 
 ## 🚀 Usages
 
+<<<<<<< HEAD
+=======
+### 🚚 Via JinaHub
+
+#### using docker images
+Use the prebuilt images from JinaHub in your python codes, 
+
+```python
+from jina import Flow
+	
+f = Flow().add(uses='jinahub+docker://ImageTorchEncoder')
+```
+
+or in the `.yml` config.
+	
+```yaml
+jtype: Flow
+pods:
+  - name: encoder
+    uses: 'jinahub+docker://ImageTorchEncoder'
+    with: 
+      model_name: 'mobilenet_v2'
+``` 
+This does not support GPU at the moment.
+
+#### using source codes
+Use the source codes from JinaHub in your python codes,
+
+```python
+from jina import Flow
+	
+f = Flow().add(uses='jinahub://ImageTorchEncoder')
+```
+
+or in the `.yml` config.
+
+```yaml
+jtype: Flow
+pods:
+  - name: encoder
+    uses: 'jinahub://ImageTorchEncoder'
+```
+
+>>>>>>> master
 ### 📦️ Via Pypi
 
 1. Install the `executor-image-torch-encode` package.
