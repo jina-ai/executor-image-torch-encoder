@@ -111,7 +111,7 @@ from jina import Flow, Document
 f = Flow().add(uses='docker://executor-image-torch-encoder')
 
 with f:
-    resp = f.post(on='foo', inputs=Document(blob=np.ones((3, 224, 224), dtype=np.float32)), return_resutls=True)
+    resp = f.post(on='foo', inputs=Document(blob=np.ones((3, 224, 224), dtype=np.float32)), return_results=True)
 	print(f'{resp}')
 ```
 
