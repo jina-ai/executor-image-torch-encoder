@@ -13,20 +13,18 @@ from jinahub.image.encoder import ImageTorchEncoder
 
 
 @pytest.mark.parametrize(
-    ['content', 'channel_axis', 'out_shape'],
+    ['content', 'out_shape'],
     [
-        (np.ones((10, 10, 3)), 2, (10, 3, 10)),
-        (np.ones((10, 3, 10)), 1, (10, 3, 10)),
-        (np.ones((3, 10, 10)), 0, (10, 3, 10))
+        (np.ones((2, 10, 10, 3)), (2, 3, 10, 10)),
+        (np.ones((2, 20, 20, 3)), (2, 3, 20, 20)),
+        (np.ones((2, 113, 113, 3)), (2, 3, 113, 113))
     ]
 )
 def test_move_channel_axis(
         content: np.ndarray,
-        channel_axis: int,
         out_shape: Tuple
 ):
     encoder = ImageTorchEncoder(
-        channel_axis=channel_axis,
         load_pre_trained_from_path=''
     )
 
@@ -95,7 +93,7 @@ def test_encode_image_returns_correct_length(traversal_path: str, docs: Document
 
 
 def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
-    encoder = ImageTorchEncoder(channel_axis=3, model_name='resnet50')
+    encoder = ImageTorchEncoder(model_name='resnet50')
 
     embeddings = {}
     for name, image_arr in test_images.items():

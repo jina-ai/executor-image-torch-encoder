@@ -10,6 +10,7 @@ from jina import Executor, requests, DocumentArray
 import torch
 import torch.nn as nn
 import torchvision.models as models
+import torchvision.transforms as T
 
 
 def _batch_generator(data: List[Any], batch_size: int):
@@ -20,7 +21,7 @@ def _batch_generator(data: List[Any], batch_size: int):
 class ImageTorchEncoder(Executor):
     """
     :class:`ImageTorchEncoder` encodes ``Document`` content from a ndarray,
-    potentially B x (Channel x Height x Width) into a ndarray of `B x D`.
+    B x (Height x Width x Channel) into a ndarray of `B x D`.
     Where B` is the batch size and `D` is the Dimension.
     Internally, :class:`ImageTorchEncoder` wraps the models from `
     `torchvision.models`.
@@ -37,7 +38,6 @@ class ImageTorchEncoder(Executor):
             output of the last convolutional block, and thus the output of
             the model will be a 2D tensor.
         - `max`: Means that global max pooling will be applied.
-    :param channel_axis: The axis of the color channel, default is 1
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
     :param load_pre_trained_from_path: Loads your own model weights form the path. If not provided, the default
            model will be downloaded from torch hub.
@@ -52,7 +52,6 @@ class ImageTorchEncoder(Executor):
         self,
         model_name: str = 'mobilenet_v2',
         pool_strategy: str = 'mean',
-        channel_axis: int = 1,
         device: Optional[str] = None,
         load_pre_trained_from_path: Optional[str] = None,
         default_traversal_path: Optional[str] = None,
@@ -70,7 +69,6 @@ class ImageTorchEncoder(Executor):
         self.default_traversal_path = self.DEFAULT_TRAVERSAL_PATH if default_traversal_path is None\
             else default_traversal_path
 
-        self.channel_axis = channel_axis
         # axis 0 is the batch
         self._default_channel_axis = 1
         self.model_name = model_name
@@ -88,6 +86,17 @@ class ImageTorchEncoder(Executor):
         self.model.to(torch.device(self.device))
         if self.pool_strategy is not None:
             self.pool_fn = getattr(np, self.pool_strategy)
+
+        self._preprocess = T.Compose([
+            T.ToPILImage(),
+            T.Resize(256),
+            T.CenterCrop(224),
+            T.ToTensor(),
+            T.Normalize(
+                mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225]
+            )
+        ])
 
     def _extract_feature_from_torch_module(self, model: nn.Module):
         # TODO: Find better way to extract the correct layer from the torch model.
@@ -115,8 +124,7 @@ class ImageTorchEncoder(Executor):
             self._compute_embeddings(docs_batch_generator)
 
     def _maybe_move_channel_axis(self, images: np.ndarray) -> 'np.ndarray':
-        if self.channel_axis != self._default_channel_axis:
-            images = np.moveaxis(images, self.channel_axis, self._default_channel_axis)
+        images = np.moveaxis(images, 3, self._default_channel_axis)
         return images
 
     def _get_docs_batch_generator(self, docs: DocumentArray, parameters: Dict):
@@ -133,7 +141,8 @@ class ImageTorchEncoder(Executor):
         with torch.no_grad():
             for document_batch in docs_batch_generator:
                 blob_batch = np.stack([d.blob for d in document_batch])
-                images = self._maybe_move_channel_axis(blob_batch)
+                preprocessed_batch = self._preprocess_image(blob_batch)
+                images = self._maybe_move_channel_axis(preprocessed_batch)
                 tensor = torch.from_numpy(images)
                 tensor = tensor.to(self.device)
                 features = self._get_features(tensor).detach()
@@ -141,4 +150,8 @@ class ImageTorchEncoder(Executor):
 
                 for doc, embed in zip(document_batch, features):
                     doc.embedding = embed
+
+    def _preprocess_image(self, images: List[np.array]):
+        batch = np.stack(images)
+        return self._preprocess(batch)
 
