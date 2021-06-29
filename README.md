@@ -57,7 +57,7 @@ f = Flow().add(uses='jinahub://ImageTorchEncoder')
 
 with f:
     resp = f.post(on='foo', inputs=Document(blob=np.ones((3, 224, 224), dtype=np.float32)), return_results=True)
-	print(f'{resp}')
+	print(f'{resp[0].docs[0].embedding.shape}')
 ```
 
 or in the `.yml` config.
@@ -118,7 +118,7 @@ f = Flow().add(uses='docker://executor-image-torch-encoder')
 
 with f:
     resp = f.post(on='foo', inputs=Document(blob=np.ones((3, 224, 224), dtype=np.float32)), return_results=True)
-	print(f'{resp}')
+	print(f'{resp[0].docs[0].embedding.shape}')
 ```
 
 ### Inputs 
