@@ -83,8 +83,7 @@ import numpy as np
 
 from jina import Flow, Document
 
-f = Flow().add(
-    uses='jinahub+docker://ImageTorchEncoder')
+f = Flow().add(uses='jinahub+docker://ImageTorchEncoder')
 
 doc = Document(blob=np.ones((224, 224, 3), dtype=np.uint8))
 

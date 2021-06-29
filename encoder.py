@@ -115,11 +115,11 @@ class ImageTorchEncoder(Executor):
     @requests
     def encode(self, docs: Optional[DocumentArray], parameters: Optional[Dict] = None, **kwargs):
         """
-        Encode doc content into vector representation.
+        Encode image data into a ndarray of `D` as dimension, and fill the embedding of each Document.
 
-        :param docs: `DocumentArray` passed from the previous ``Executor``.
+        :param docs: DocumentArray containing images
         :param parameters: dictionary to define the `traversal_paths` and the `batch_size`. For example,
-            `parameters={'traversal_paths': ['r'], 'batch_size': 10}`.
+               `parameters={'traversal_paths': ['r'], 'batch_size': 10}`.
         :param kwargs: Additional key value arguments.
         """
         if docs:
