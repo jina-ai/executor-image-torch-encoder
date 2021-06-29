@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 import pytest
 
@@ -15,12 +15,12 @@ from jinahub.image.encoder import ImageTorchEncoder
 @pytest.mark.parametrize(
     ['content', 'out_shape'],
     [
-        (np.ones((2, 10, 10, 3)), (2, 3, 10, 10)),
-        (np.ones((2, 20, 20, 3)), (2, 3, 20, 20)),
-        (np.ones((2, 113, 113, 3)), (2, 3, 113, 113))
+        ([np.ones((10, 10, 3), dtype=np.uint8), (3, 224, 224)]),
+        ([np.ones((360, 420, 3), dtype=np.uint8), (3, 224, 224)]),
+        ([np.ones((300, 300, 3), dtype=np.uint8), (3, 224, 224)])
     ]
 )
-def test_move_channel_axis(
+def test_preprocessing_reshape_correct(
         content: np.ndarray,
         out_shape: Tuple
 ):
@@ -28,7 +28,7 @@ def test_move_channel_axis(
         load_pre_trained_from_path=''
     )
 
-    reshaped_content = encoder._maybe_move_channel_axis(content)
+    reshaped_content = encoder._preprocess(content)
 
     assert reshaped_content.shape == out_shape, f'Expected shape {out_shape} but got {reshaped_content.shape}'
 
@@ -78,22 +78,30 @@ def test_get_features_cpu():
 @pytest.mark.parametrize(
     'traversal_path, docs',
     [
-        ('r', pytest.lazy_fixture('docs_with_blobs')),
-        ('c', pytest.lazy_fixture('docs_with_chunk_blobs'))
+        (['r'], pytest.lazy_fixture('docs_with_blobs')),
+        (['c'], pytest.lazy_fixture('docs_with_chunk_blobs'))
     ]
 )
-def test_encode_image_returns_correct_length(traversal_path: str, docs: DocumentArray) -> None:
+def test_encode_image_returns_correct_length(traversal_path: List[str], docs: DocumentArray) -> None:
     encoder = ImageTorchEncoder(default_traversal_path=traversal_path)
 
     encoder.encode(docs=docs, parameters={})
 
-    for doc in docs.traverse_flat([traversal_path]):
+    for doc in docs.traverse_flat(traversal_path):
         assert doc.embedding is not None
         assert doc.embedding.shape == (1280, )
 
 
-def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
-    encoder = ImageTorchEncoder(model_name='resnet50')
+@pytest.mark.parametrize(
+    'model_name',
+    [
+        'resnet18',
+        'resnet50',
+        'inception_v3'
+    ]
+)
+def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: str):
+    encoder = ImageTorchEncoder(model_name=model_name)
     embeddings = {}
 
     for name, image_arr in test_images.items():

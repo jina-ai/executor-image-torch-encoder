@@ -31,8 +31,6 @@ class ImageTorchEncoder(Executor):
         ``shufflenet_v2_x1_0``, ``mobilenet_v2``, ``resnext50_32x4d``,
         ``wide_resnet50_2``, ``mnasnet1_0``
     :param pool_strategy: the pooling strategy. Options are:
-        - `None`: Means that the output of the model will be the 4D tensor
-            output of the last convolutional block.
         - `mean`: Means that global average pooling will be applied to the
             output of the last convolutional block, and thus the output of
             the model will be a 2D tensor.
@@ -40,21 +38,22 @@ class ImageTorchEncoder(Executor):
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
     :param load_pre_trained_from_path: Loads your own model weights form the path. If not provided, the default
            model will be downloaded from torch hub.
-    :param default_traversal_path: Used in the encode method an define traversal on the received `DocumentArray`
+    :param default_traversal_path: Used in the encode method an defines traversal on the received `DocumentArray`
     :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
-    DEFAULT_TRAVERSAL_PATH = 'r'
+    DEFAULT_TRAVERSAL_PATH = ['r']
 
     def __init__(
         self,
-        model_name: str = 'mobilenet_v2',
+        model_name: str = 'resnet18',
         pool_strategy: str = 'mean',
         device: Optional[str] = None,
         load_pre_trained_from_path: Optional[str] = None,
         default_traversal_path: Optional[List[str]] = None,
         default_batch_size: Optional[int] = 32,
+        use_default_preprocessing: bool = True,
         *args,
         **kwargs
     ):
@@ -64,6 +63,7 @@ class ImageTorchEncoder(Executor):
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
         self.device = device
         self.default_batch_size = default_batch_size
+        self.use_default_preprocessing = use_default_preprocessing
 
         self.default_traversal_path = default_traversal_path or self.DEFAULT_TRAVERSAL_PATH
 
@@ -122,10 +122,6 @@ class ImageTorchEncoder(Executor):
             docs_batch_generator = self._get_docs_batch_generator(docs, parameters)
             self._compute_embeddings(docs_batch_generator)
 
-    def _maybe_move_channel_axis(self, images: np.ndarray) -> 'np.ndarray':
-        images = np.moveaxis(images, 3, self._default_channel_axis)
-        return images
-
     def _get_docs_batch_generator(self, docs: DocumentArray, parameters: Dict):
         traversal_path = parameters.get('traversal_path', self.default_traversal_path)
         batch_size = parameters.get('batch_size', self.default_batch_size)
@@ -139,9 +135,11 @@ class ImageTorchEncoder(Executor):
     def _compute_embeddings(self, docs_batch_generator: Iterable) -> None:
         with torch.no_grad():
             for document_batch in docs_batch_generator:
-                blob_batch = np.stack([d.blob for d in document_batch])
-                preprocessed_batch = self._preprocess_image(blob_batch)
-                images = self._maybe_move_channel_axis(preprocessed_batch)
+                blob_batch = [d.blob for d in document_batch]
+                if self.use_default_preprocessing:
+                    images = np.stack(self._preprocess_image(blob_batch))
+                else:
+                    images = np.stack(blob_batch)
                 tensor = torch.from_numpy(images).to(self.device)
                 features = self._get_features(tensor).detach()
                 features = self._get_pooling(features.cpu().numpy())
@@ -149,6 +147,5 @@ class ImageTorchEncoder(Executor):
                 for doc, embed in zip(document_batch, features):
                     doc.embedding = embed
 
-    def _preprocess_image(self, images: List[np.array]):
-        batch = np.stack(images)
-        return self._preprocess(batch)
+    def _preprocess_image(self, images: List[np.array]) -> List[np.ndarray]:
+        return [self._preprocess(img) for img in images]
