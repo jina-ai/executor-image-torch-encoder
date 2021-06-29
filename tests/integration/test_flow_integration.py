@@ -29,7 +29,7 @@ def test_no_batch(arr_in: np.ndarray):
     results_arr = DocumentArray(resp[0].data.docs)
     assert len(results_arr) == 1
     assert results_arr[0].embedding is not None
-    assert results_arr[0].embedding.shape == (1280, )
+    assert results_arr[0].embedding.shape == (1000, )
 
 
 def test_with_batch():

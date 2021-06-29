@@ -24,9 +24,7 @@ def test_preprocessing_reshape_correct(
         content: np.ndarray,
         out_shape: Tuple
 ):
-    encoder = ImageTorchEncoder(
-        load_pre_trained_from_path=''
-    )
+    encoder = ImageTorchEncoder()
 
     reshaped_content = encoder._preprocess(content)
 
@@ -46,8 +44,7 @@ def test_get_pooling(
     expected_output: str
 ):
     encoder = ImageTorchEncoder(
-        pool_strategy=pooling_strategy,
-        load_pre_trained_from_path=''
+        pool_strategy=pooling_strategy
     )
 
     feature_map_after_pooling = encoder._get_pooling(feature_map)
@@ -72,7 +69,7 @@ def test_get_features_cpu():
 
     encodings = encoder._get_features(torch.from_numpy(arr_in)).detach().numpy()
 
-    assert encodings.shape == (2, 1280, 1, 1)
+    assert encodings.shape == (2, 1000)
 
 
 @pytest.mark.parametrize(
@@ -89,7 +86,7 @@ def test_encode_image_returns_correct_length(traversal_path: List[str], docs: Do
 
     for doc in docs.traverse_flat(traversal_path):
         assert doc.embedding is not None
-        assert doc.embedding.shape == (1280, )
+        assert doc.embedding.shape == (1000, )
 
 
 @pytest.mark.parametrize(

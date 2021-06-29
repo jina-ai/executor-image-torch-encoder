@@ -21,10 +21,13 @@ class ImageTorchEncoder(Executor):
     """
     :class:`ImageTorchEncoder` encodes ``Document`` content from a ndarray,
     B x (Height x Width x Channel) into a ndarray of `B x D`.
-    Where `B` is the batch size and `D` is the Dimension.
+    Where `B` is the batch size and `D` is the Dimension of the embedding.
+    The encoder expects images the color channel to be the last axis.
+
     Internally, :class:`ImageTorchEncoder` wraps the models from `
     `torchvision.models`.
     https://pytorch.org/docs/stable/torchvision/models.html
+
     :param model_name: the name of the model. Supported models include
         ``resnet18``, ``alexnet``, `squeezenet1_0``,  ``vgg16``,
         ``densenet161``, ``inception_v3``, ``googlenet``,
@@ -36,8 +39,6 @@ class ImageTorchEncoder(Executor):
             the model will be a 2D tensor.
         - `max`: Means that global max pooling will be applied.
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
-    :param load_pre_trained_from_path: Loads your own model weights form the path. If not provided, the default
-           model will be downloaded from torch hub.
     :param default_traversal_path: Used in the encode method an defines traversal on the received `DocumentArray`
     :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
     :param args:  Additional positional arguments
@@ -50,7 +51,6 @@ class ImageTorchEncoder(Executor):
         model_name: str = 'resnet18',
         pool_strategy: str = 'mean',
         device: Optional[str] = None,
-        load_pre_trained_from_path: Optional[str] = None,
         default_traversal_path: Optional[List[str]] = None,
         default_batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
@@ -75,11 +75,7 @@ class ImageTorchEncoder(Executor):
         self.pool_strategy = pool_strategy
         self.pool_fn = getattr(np, self.pool_strategy)
 
-        if load_pre_trained_from_path:
-            model = getattr(models, self.model_name)(pretrained=False)
-            model.load_state_dict(torch.load(load_pre_trained_from_path))
-        else:
-            model = getattr(models, self.model_name)(pretrained=True)
+        model = getattr(models, self.model_name)(pretrained=True)
 
         self.model = self._extract_feature_from_torch_module(model)
         self.model.to(torch.device(self.device))
@@ -118,6 +114,14 @@ class ImageTorchEncoder(Executor):
 
     @requests
     def encode(self, docs: Optional[DocumentArray], parameters: Optional[Dict] = None, **kwargs):
+        """
+        Encode doc content into vector representation.
+
+        :param docs: `DocumentArray` passed from the previous ``Executor``.
+        :param parameters: dictionary to define the `traversal_paths` and the `batch_size`. For example,
+            `parameters={'traversal_paths': ['r'], 'batch_size': 10}`.
+        :param kwargs: Additional key value arguments.
+        """
         if docs:
             docs_batch_generator = self._get_docs_batch_generator(docs, parameters)
             self._compute_embeddings(docs_batch_generator)
