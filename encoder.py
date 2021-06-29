@@ -108,6 +108,13 @@ class ImageTorchEncoder(Executor):
 
     @requests
     def encode(self, docs: Optional[DocumentArray], parameters: Optional[Dict] = None, **kwargs):
+        """
+        Encode image data into a ndarray of `D` as dimension, and fill the embedding of each Document.
+
+        :param docs: DocumentArray containing images
+        :param parameters: parameters dictionary
+        :return: an ndarray in size `B x D`.
+        """
         if docs:
             docs_batch_generator = self._get_docs_batch_generator(docs, parameters)
             self._compute_embeddings(docs_batch_generator)
