@@ -107,7 +107,7 @@ class ImageTorchEncoder(Executor):
         return self.pool_fn(feature_map, axis=(2, 3))
 
     @requests
-    def encode(self, docs: DocumentArray, parameters: Dict, **kwargs):
+    def encode(self, docs: Optional[DocumentArray], parameters: Dict = None, **kwargs):
         """
         Encode image data into a ndarray of `D` as dimension, and fill the embedding of each Document.
 
