@@ -14,7 +14,7 @@ from jina import Executor, requests, DocumentArray
 
 def _batch_generator(data: List[Any], batch_size: int):
     for i in range(0, len(data), batch_size):
-        yield data[i:min(i + batch_size, len(data))]
+        yield data[i: i + batch_size]
 
 
 class ImageTorchEncoder(Executor):
