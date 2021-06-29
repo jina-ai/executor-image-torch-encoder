@@ -49,9 +49,15 @@ This does not support GPU at the moment.
 Use the source codes from JinaHub in your python codes,
 
 ```python
-from jina import Flow
+import numpy as np
+
+from jina import Flow, Document
 	
 f = Flow().add(uses='jinahub://ImageTorchEncoder')
+
+with f:
+    resp = f.post(on='foo', inputs=Document(blob=np.ones((3, 224, 224), dtype=np.float32)), return_results=True)
+	print(f'{resp}')
 ```
 
 or in the `.yml` config.
