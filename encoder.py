@@ -19,12 +19,12 @@ def _batch_generator(data: List[Any], batch_size: int):
 
 class ImageTorchEncoder(Executor):
     """
-    :class:`ImageTorchEncoder` encodes ``Document`` content from a ndarray,
-    B x (Height x Width x Channel) into a ndarray of `B x D`.
+    :class:`ImageTorchEncoder` encodes ``Document`` blobs of type `ndarray` (`float32`) and shape
+    `B x H x W x C` into `ndarray` of `B x D`.
     Where `B` is the batch size and `D` is the Dimension of the embedding.
-    The encoder expects images the color channel to be the last axis.
+    If `use_default_preprocessing=False`, the expected input shape is `B x C x H x W` with `float32` dtype.
 
-    Internally, :class:`ImageTorchEncoder` wraps the models from `
+    Internally, :class:`ImageTorchEncoder` wraps the models from
     `torchvision.models`.
     https://pytorch.org/docs/stable/torchvision/models.html
 

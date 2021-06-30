@@ -93,9 +93,11 @@ with f:
 ```
 
 ### Inputs 
-`Document` with `blob` of the shape `H x W x C`. 
-Note that the `ImageTorchEncoder` by default resize and normalizes the image before inference.
-Preprocessing can be disabled by setting `use_default_preprocessing=False` in the constructor.
+If `use_default_preprocessing=True` (recommended):  
+`Document` with `blob` of shape `H x W x C` and dtype `uint8`.  
+
+If `use_default_preprocessing=False`:  
+`Document` with `blob` of shape `C x H x W` and dtype `float32`.
 
 ### Returns
 `Document` with `embedding` fields filled with an `ndarray` of the shape `embedding_dim` (size depends on the model) with `dtype=float32`.

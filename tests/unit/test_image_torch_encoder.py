@@ -121,3 +121,13 @@ def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: 
     assert small_distance < dist('airplane', 'studio')
     assert small_distance < dist('airplane', 'satellite')
     assert small_distance < dist('studio', 'satellite')
+
+
+def test_no_preprocessing():
+    encoder = ImageTorchEncoder(use_default_preprocessing=False)
+    arr_in = np.ones((3, 224, 224), dtype=np.float32)
+    docs = DocumentArray([Document(blob=arr_in)])
+
+    encoder.encode(docs=docs, parameters={})
+
+    assert docs[0].embedding.shape == (1000, )
