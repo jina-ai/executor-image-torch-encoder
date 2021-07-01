@@ -33,11 +33,6 @@ class ImageTorchEncoder(Executor):
         ``densenet161``, ``inception_v3``, ``googlenet``,
         ``shufflenet_v2_x1_0``, ``mobilenet_v2``, ``resnext50_32x4d``,
         ``wide_resnet50_2``, ``mnasnet1_0``
-    :param pool_strategy: the pooling strategy. Options are:
-        - `mean`: Means that global average pooling will be applied to the
-            output of the last convolutional block, and thus the output of
-            the model will be a 2D tensor.
-        - `max`: Means that global max pooling will be applied.
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
     :param default_traversal_path: Used in the encode method an defines traversal on the received `DocumentArray`
     :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
@@ -49,7 +44,6 @@ class ImageTorchEncoder(Executor):
     def __init__(
         self,
         model_name: str = 'resnet18',
-        pool_strategy: str = 'mean',
         device: Optional[str] = None,
         default_traversal_path: Optional[List[str]] = None,
         default_batch_size: Optional[int] = 32,
@@ -70,17 +64,15 @@ class ImageTorchEncoder(Executor):
         # axis 0 is the batch
         self._default_channel_axis = 1
         self.model_name = model_name
-        if pool_strategy not in ('mean', 'max'):
-            raise NotImplementedError(f'unknown pool_strategy: {self.pool_strategy}')
-        self.pool_strategy = pool_strategy
-        self.pool_fn = getattr(np, self.pool_strategy)
 
         model = getattr(models, self.model_name)(pretrained=True)
 
         self.model = self._extract_feature_from_torch_module(model)
         self.model.to(torch.device(self.device))
-        if self.pool_strategy is not None:
-            self.pool_fn = getattr(np, self.pool_strategy)
+
+        self._pooling_layer = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+        self._pooling_layer.to(torch.device(self.device))
+        self._pooling_function = lambda x: self._pooling_layer(x).squeeze(3).squeeze(2)
 
         self._preprocess = T.Compose([
             T.ToPILImage(),
@@ -108,9 +100,9 @@ class ImageTorchEncoder(Executor):
         return self.model(content)
 
     def _get_pooling(self, feature_map: 'np.ndarray') -> 'np.ndarray':
-        if feature_map.ndim == 2 or self.pool_strategy is None:
+        if feature_map.ndim == 2:
             return feature_map
-        return self.pool_fn(feature_map, axis=(2, 3))
+        return self._pooling_function(torch.from_numpy(feature_map)).cpu().numpy()
 
     @requests
     def encode(self, docs: Optional[DocumentArray], parameters: Dict, **kwargs):
