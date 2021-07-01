@@ -99,10 +99,8 @@ class ImageTorchEncoder(Executor):
     def _get_features(self, content):
         return self.model(content)
 
-    def _get_pooling(self, feature_map: 'np.ndarray') -> 'np.ndarray':
-        if feature_map.ndim == 2:
-            return feature_map
-        return self._pooling_function(torch.from_numpy(feature_map)).cpu().numpy()
+    def _get_pooling(self, feature_map: 'torch.Tensor') -> 'torch.Tensor':
+        return self._pooling_function(feature_map)
 
     @requests
     def encode(self, docs: Optional[DocumentArray], parameters: Dict, **kwargs):
@@ -137,8 +135,9 @@ class ImageTorchEncoder(Executor):
                 else:
                     images = np.stack(blob_batch)
                 tensor = torch.from_numpy(images).to(self.device)
-                features = self._get_features(tensor).detach()
-                features = self._get_pooling(features.cpu().numpy())
+                features = self._get_features(tensor)
+                features = self._get_pooling(features)
+                features = features.detach().cpu().numpy()
 
                 for doc, embed in zip(document_batch, features):
                     doc.embedding = embed
