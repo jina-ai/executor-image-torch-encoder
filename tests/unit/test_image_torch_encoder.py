@@ -32,24 +32,21 @@ def test_preprocessing_reshape_correct(
 
 
 @pytest.mark.parametrize(
-    ['feature_map', 'pooling_strategy', 'expected_output'],
+    'feature_map',
     [
-        (np.ones((1, 10, 3, 3)), 'mean', np.mean(np.ones((1, 10, 3, 3)), axis=(2, 3))),
-        (np.ones((1, 10, 3, 3)), 'max', np.max(np.ones((1, 10, 3, 3)), axis=(2, 3)))
+        np.ones((1, 10, 3, 3)),
+        np.random.rand(1, 10, 3, 3),
+        np.zeros((1, 5, 50, 55))
     ]
 )
 def test_get_pooling(
     feature_map: np.ndarray,
-    pooling_strategy: str,
-    expected_output: str
 ):
-    encoder = ImageTorchEncoder(
-        pool_strategy=pooling_strategy
-    )
+    encoder = ImageTorchEncoder()
 
     feature_map_after_pooling = encoder._get_pooling(feature_map)
 
-    np.testing.assert_array_equal(feature_map_after_pooling, expected_output)
+    np.testing.assert_array_almost_equal(feature_map_after_pooling, np.mean(feature_map, axis=(2, 3)))
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(),
@@ -131,3 +128,4 @@ def test_no_preprocessing():
     encoder.encode(docs=docs, parameters={})
 
     assert docs[0].embedding.shape == (1000, )
+
