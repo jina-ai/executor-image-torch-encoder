@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 import pytest
 
@@ -13,24 +13,20 @@ from jinahub.image.encoder import ImageTorchEncoder
 
 
 @pytest.mark.parametrize(
-    ['content', 'channel_axis', 'out_shape'],
+    ['content', 'out_shape'],
     [
-        (np.ones((10, 10, 3)), 2, (10, 3, 10)),
-        (np.ones((10, 3, 10)), 1, (10, 3, 10)),
-        (np.ones((3, 10, 10)), 0, (10, 3, 10))
+        ([np.ones((10, 10, 3), dtype=np.uint8), (3, 224, 224)]),
+        ([np.ones((360, 420, 3), dtype=np.uint8), (3, 224, 224)]),
+        ([np.ones((300, 300, 3), dtype=np.uint8), (3, 224, 224)])
     ]
 )
-def test_move_channel_axis(
+def test_preprocessing_reshape_correct(
         content: np.ndarray,
-        channel_axis: int,
         out_shape: Tuple
 ):
-    encoder = ImageTorchEncoder(
-        channel_axis=channel_axis,
-        load_pre_trained_from_path=''
-    )
+    encoder = ImageTorchEncoder()
 
-    reshaped_content = encoder._maybe_move_channel_axis(content)
+    reshaped_content = encoder._preprocess(content)
 
     assert reshaped_content.shape == out_shape, f'Expected shape {out_shape} but got {reshaped_content.shape}'
 
@@ -48,8 +44,7 @@ def test_get_pooling(
     expected_output: str
 ):
     encoder = ImageTorchEncoder(
-        pool_strategy=pooling_strategy,
-        load_pre_trained_from_path=''
+        pool_strategy=pooling_strategy
     )
 
     feature_map_after_pooling = encoder._get_pooling(feature_map)
@@ -74,7 +69,7 @@ def test_get_features_cpu():
 
     encodings = encoder._get_features(torch.from_numpy(arr_in)).detach().numpy()
 
-    assert encodings.shape == (2, 1280, 1, 1)
+    assert encodings.shape == (2, 1000)
 
 
 @pytest.mark.parametrize(
@@ -84,20 +79,28 @@ def test_get_features_cpu():
         (['c'], pytest.lazy_fixture('docs_with_chunk_blobs'))
     ]
 )
-def test_encode_image_returns_correct_length(traversal_path, docs):
+def test_encode_image_returns_correct_length(traversal_path: List[str], docs: DocumentArray) -> None:
     encoder = ImageTorchEncoder(default_traversal_path=traversal_path)
 
     encoder.encode(docs=docs, parameters={})
 
-    for doc in docs.traverse_flat([traversal_path]):
+    for doc in docs.traverse_flat(traversal_path):
         assert doc.embedding is not None
-        assert doc.embedding.shape == (1280, )
+        assert doc.embedding.shape == (1000, )
 
 
-def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
-    encoder = ImageTorchEncoder(channel_axis=3, model_name='resnet50')
-
+@pytest.mark.parametrize(
+    'model_name',
+    [
+        'resnet18',
+        'resnet50',
+        'inception_v3'
+    ]
+)
+def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: str):
+    encoder = ImageTorchEncoder(model_name=model_name)
     embeddings = {}
+
     for name, image_arr in test_images.items():
         docs = DocumentArray([Document(blob=image_arr)])
         encoder.encode(docs, parameters={})
@@ -118,3 +121,13 @@ def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
     assert small_distance < dist('airplane', 'studio')
     assert small_distance < dist('airplane', 'satellite')
     assert small_distance < dist('studio', 'satellite')
+
+
+def test_no_preprocessing():
+    encoder = ImageTorchEncoder(use_default_preprocessing=False)
+    arr_in = np.ones((3, 224, 224), dtype=np.float32)
+    docs = DocumentArray([Document(blob=arr_in)])
+
+    encoder.encode(docs=docs, parameters={})
+
+    assert docs[0].embedding.shape == (1000, )

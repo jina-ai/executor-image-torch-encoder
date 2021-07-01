@@ -13,9 +13,9 @@ import numpy as np
 
 
 @pytest.mark.parametrize('arr_in', [
-    (np.ones((3, 224, 224), dtype=np.float32)),
-    (np.ones((3, 100, 100), dtype=np.float32)),
-    (np.ones((3, 50, 40), dtype=np.float32))
+    (np.ones((224, 224, 3), dtype=np.uint8)),
+    (np.ones((100, 100, 3), dtype=np.uint8)),
+    (np.ones((50, 40, 3), dtype=np.uint8))
 ])
 def test_no_batch(arr_in: np.ndarray):
     flow = Flow().add(uses=ImageTorchEncoder)
@@ -29,7 +29,7 @@ def test_no_batch(arr_in: np.ndarray):
     results_arr = DocumentArray(resp[0].data.docs)
     assert len(results_arr) == 1
     assert results_arr[0].embedding is not None
-    assert results_arr[0].embedding.shape == (1280, )
+    assert results_arr[0].embedding.shape == (1000, )
 
 
 def test_with_batch():
@@ -38,7 +38,7 @@ def test_with_batch():
     with flow:
         resp = flow.post(
             on='/test',
-            inputs=(Document(blob=np.ones((3, 224, 224), dtype=np.float32)) for _ in range(25)),
+            inputs=(Document(blob=np.ones((224, 224, 3), dtype=np.uint8)) for _ in range(25)),
             return_results=True
         )
 
@@ -48,24 +48,25 @@ def test_with_batch():
 @pytest.mark.parametrize(
     ['docs', 'docs_per_path', 'traversal_path'],
     [
-        (pytest.lazy_fixture('docs_with_blobs'), [[['r'], 10], [['c'], 0], [['cc'], 0]], ['r']),
-        (pytest.lazy_fixture('docs_with_chunk_blobs'), [[['r'], 0], [['c'], 10], [['cc'], 0]], ['c']),
-        (pytest.lazy_fixture('docs_with_chunk_chunk_blobs'), [[['r'], 0], [['c'], 0], [['cc'], 10]], ['cc'])
+        (pytest.lazy_fixture('docs_with_blobs'), [['r', 11], ['c', 0], ['cc', 0]], 'r'),
+        (pytest.lazy_fixture('docs_with_chunk_blobs'), [['r', 0], ['c', 11], ['cc', 0]], 'c'),
+        (pytest.lazy_fixture('docs_with_chunk_chunk_blobs'), [['r', 0], ['c', 0], ['cc', 11]], 'cc')
     ]
 )
-def test_traversal_path(docs: DocumentArray, docs_per_path: List[List[str]], traversal_path: List[str]):
+def test_traversal_path(docs: DocumentArray, docs_per_path: List[List[str]], traversal_path: str):
     def validate_traversal(expected_docs_per_path: List[List[str]]):
         def validate(res):
             for path, count in expected_docs_per_path:
-                return len(DocumentArray(res[0].docs).traverse_flat(path).get_attributes('embedding')) == count
+                return len(DocumentArray(res[0].docs).traverse_flat([path]).get_attributes('embedding')) == count
         return validate
 
     flow = Flow().add(uses=ImageTorchEncoder)
+
     with flow:
         resp = flow.post(
             on='/test',
             inputs=docs,
-            parameters={'traversal_path': traversal_path},
+            parameters={'traversal_path': [traversal_path]},
             return_results=True
         )
 
