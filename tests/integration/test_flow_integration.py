@@ -3,13 +3,15 @@ __license__ = "Apache-2.0"
 
 from typing import List
 
+import numpy as np
 import pytest
-
-from jinahub.image.encoder import ImageTorchEncoder
 
 from jina import Flow, Document, DocumentArray
 
-import numpy as np
+try:
+    from encoder import ImageTorchEncoder
+except:
+    from jinahub.image.encoder import ImageTorchEncoder
 
 
 @pytest.mark.parametrize('arr_in', [
@@ -29,7 +31,7 @@ def test_no_batch(arr_in: np.ndarray):
     results_arr = DocumentArray(resp[0].data.docs)
     assert len(results_arr) == 1
     assert results_arr[0].embedding is not None
-    assert results_arr[0].embedding.shape == (1000, )
+    assert results_arr[0].embedding.shape == (1000,)
 
 
 def test_with_batch():
@@ -58,6 +60,7 @@ def test_traversal_path(docs: DocumentArray, docs_per_path: List[List[str]], tra
         def validate(res):
             for path, count in expected_docs_per_path:
                 return len(DocumentArray(res[0].docs).traverse_flat([path]).get_attributes('embedding')) == count
+
         return validate
 
     flow = Flow().add(uses=ImageTorchEncoder)
