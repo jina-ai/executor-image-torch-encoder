@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="executor-image-torch-encoder",
-    version="2.0",
+    version="2.0.3",
     author='Jina Dev Team',
     author_email='dev-team@jina.ai',
     description="Executor that encodes images into latent space using PyTorch hosted neural networks",
