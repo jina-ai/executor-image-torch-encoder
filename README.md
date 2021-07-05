@@ -56,7 +56,8 @@ f = Flow().add(uses=ImageTorchEncoder)
 ### 🐳 Via Docker
 1. Clone the repo and build the docker image
 ```bash
-git clone https://github.com/jina-ai/executor-text-paddle.git
+git clone https://github.com/jina-ai/executor-image-torch-encoder/
+
 cd executor-image-torch-encoder 
 docker build -t jinahub-image-torch-encoder .
 ```
