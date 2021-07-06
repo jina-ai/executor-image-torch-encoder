@@ -9,6 +9,7 @@ import torchvision.transforms as T
 import torch
 import torch.nn as nn
 import torchvision.models as models
+
 from jina import Executor, requests, DocumentArray
 
 
