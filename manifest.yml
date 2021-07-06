@@ -5,7 +5,7 @@ description: '`ImageTorchEncoder` encodes data from a `ndarray` into a d-dimensi
 author: Jina AI Dev-Team (dev-team@jina.ai)
 vendor: Jina AI Limited
 documentation: https://github.com/jina-ai/jina-hub
-version: 0.0.1
+version: 2
 license: apache-2.0
 alias: ImageTorchEncoder
 url: https://github.com/jina-ai/executor-image-torch-encoder
