@@ -9,7 +9,13 @@ import torch
 import numpy as np
 from jina import DocumentArray, Document
 
-from jinahub.image.encoder import ImageTorchEncoder
+
+try:
+    from encoder import ImageTorchEncoder
+except:
+    from jinahub.image.encoder import ImageTorchEncoder
+
+
 
 
 @pytest.mark.parametrize(
