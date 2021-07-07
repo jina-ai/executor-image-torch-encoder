@@ -5,4 +5,8 @@ WORKDIR ./image_torch_encoder
 
 RUN pip install .
 
+# setup the workspace
+COPY . /workspace
+WORKDIR /workspace
+
 ENTRYPOINT ["jina", "executor", "--uses", "config.yml"]
