@@ -47,7 +47,7 @@ pip install git+https://github.com/jina-ai/executor-image-torch-encoder.git
 ```
 2. Use the `ImageTorchEncoder` in your code
 ```python
-from jinahub.image.encoder import ImageTorchEncoder
+from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
 from jina import Flow
 
 f = Flow().add(uses=ImageTorchEncoder)
