@@ -8,6 +8,7 @@ test_dir=$(pwd)/tests
 
 pip install wheel
 pip install -r tests/requirements.txt
+export PYTHONPATH=.
 pip install .
 # Need to run both test folders separately because of CUDA GPU issue
 # https://github.com/pytorch/pytorch/issues/40403

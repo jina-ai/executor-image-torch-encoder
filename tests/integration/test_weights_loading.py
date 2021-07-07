@@ -7,7 +7,7 @@ from torch import hub
 from pytest_mock import MockerFixture
 
 try:
-    from encoder import ImageTorchEncoder
+    from torch_encoder import ImageTorchEncoder
 except:
     from jinahub.image.encoder import ImageTorchEncoder
 
