@@ -91,6 +91,9 @@ doc = Document(blob=np.ones((224, 224, 3), dtype=np.uint8))
 with f:
     resp = f.post(on='/index', inputs=doc, return_results=True)
     print(f'{resp}')
+    
+    
+print('\n\nembedding:\n\n', resp[0].docs[0].embedding)
 ```
 
 ### Inputs 
