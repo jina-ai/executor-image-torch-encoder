@@ -11,7 +11,7 @@ from jina import DocumentArray, Document
 
 
 try:
-    from encoder import ImageTorchEncoder
+    from torch_encoder import ImageTorchEncoder
 except:
     from jinahub.image.encoder import ImageTorchEncoder
 
