@@ -40,19 +40,19 @@ class ImageTorchEncoder(Executor):
             the model will be a 2D tensor.
         - `max`: Means that global max pooling will be applied.
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
-    :param default_traversal_path: Used in the encode method an defines traversal on the received `DocumentArray`
+    :param default_traversal_paths: Used in the encode method an defines traversal on the received `DocumentArray`
     :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
-    DEFAULT_TRAVERSAL_PATH = ['r']
+    DEFAULT_TRAVERSAL_PATHS = ['r']
 
     def __init__(
         self,
         model_name: str = 'resnet18',
         pool_strategy: str = 'mean',
         device: Optional[str] = None,
-        default_traversal_path: Optional[List[str]] = None,
+        default_traversal_paths: Optional[List[str]] = None,
         default_batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
         *args,
@@ -66,7 +66,7 @@ class ImageTorchEncoder(Executor):
         self.default_batch_size = default_batch_size
         self.use_default_preprocessing = use_default_preprocessing
 
-        self.default_traversal_path = default_traversal_path or self.DEFAULT_TRAVERSAL_PATH
+        self.default_traversal_paths = default_traversal_paths or self.DEFAULT_TRAVERSAL_PATHS
 
         # axis 0 is the batch
         self._default_channel_axis = 1
@@ -128,7 +128,7 @@ class ImageTorchEncoder(Executor):
             self._compute_embeddings(docs_batch_generator)
 
     def _get_docs_batch_generator(self, docs: DocumentArray, parameters: Dict):
-        traversal_path = parameters.get('traversal_path', self.default_traversal_path)
+        traversal_path = parameters.get('traversal_path', self.default_traversal_paths)
         batch_size = parameters.get('batch_size', self.default_batch_size)
 
         flat_docs = docs.traverse_flat(traversal_path)
