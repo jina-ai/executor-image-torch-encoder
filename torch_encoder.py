@@ -128,7 +128,7 @@ class ImageTorchEncoder(Executor):
             self._compute_embeddings(docs_batch_generator)
 
     def _get_docs_batch_generator(self, docs: DocumentArray, parameters: Dict):
-        traversal_path = parameters.get('traversal_path', self.default_traversal_paths)
+        traversal_path = parameters.get('traversal_paths', self.default_traversal_paths)
         batch_size = parameters.get('batch_size', self.default_batch_size)
 
         flat_docs = docs.traverse_flat(traversal_path)
