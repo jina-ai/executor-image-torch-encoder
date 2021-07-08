@@ -96,6 +96,22 @@ with f:
 print('\n\nembedding:\n\n', resp[0].docs[0].embedding)
 ```
 
+Example using the class the class `ImageTorchEncoder` directly
+
+```python
+import numpy as np
+
+from jina import Document, DocumentArray
+from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
+
+doc = Document(blob=np.ones((224, 224, 3), dtype=np.uint8))
+encoder = ImageTorchEncoder()
+doc_array = DocumentArray([doc, doc])
+encoder.encode(doc_array, parameters={})
+list_embeddings = doc_array.get_attributes('embedding')
+list_embeddings[0].shape, list_embeddings[1].shape
+```
+
 ### Inputs 
 If `use_default_preprocessing=True` (recommended):  
 `Document` with `blob` of shape `H x W x C` and dtype `uint8`.  
