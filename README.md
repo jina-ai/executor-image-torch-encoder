@@ -47,7 +47,7 @@ pip install git+https://github.com/jina-ai/executor-image-torch-encoder.git
 ```
 2. Use the `ImageTorchEncoder` in your code
 ```python
-from jinahub.image.encoder import ImageTorchEncoder
+from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
 from jina import Flow
 
 f = Flow().add(uses=ImageTorchEncoder)
@@ -91,6 +91,9 @@ doc = Document(blob=np.ones((224, 224, 3), dtype=np.uint8))
 with f:
     resp = f.post(on='/index', inputs=doc, return_results=True)
     print(f'{resp}')
+    
+    
+print('\n\nembedding:\n\n', resp[0].docs[0].embedding)
 ```
 
 ### Inputs 
