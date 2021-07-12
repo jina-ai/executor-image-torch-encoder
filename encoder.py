@@ -1,20 +1,17 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Optional, List, Dict, Any, Iterable
+from typing import Optional, List, Dict, Iterable, Tuple
 
 import numpy as np
 
 import torchvision.transforms as T
 import torch
 import torch.nn as nn
-import torchvision.models as models
 from jina import Executor, requests, DocumentArray
+from jina_commons.batching import get_docs_batch_generator
 
-
-def _batch_generator(data: List[Any], batch_size: int):
-    for i in range(0, len(data), batch_size):
-        yield data[i: i + batch_size]
+from jinahub.image.models import get_layer_attribute_for_model
 
 
 class ImageTorchEncoder(Executor):
@@ -39,13 +36,12 @@ class ImageTorchEncoder(Executor):
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
-    DEFAULT_TRAVERSAL_PATH = ['r']
 
     def __init__(
         self,
         model_name: str = 'resnet18',
         device: Optional[str] = None,
-        default_traversal_path: Optional[List[str]] = None,
+        default_traversal_path: Tuple = ('r', ),
         default_batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
         *args,
@@ -59,7 +55,7 @@ class ImageTorchEncoder(Executor):
         self.default_batch_size = default_batch_size
         self.use_default_preprocessing = use_default_preprocessing
 
-        self.default_traversal_path = default_traversal_path or self.DEFAULT_TRAVERSAL_PATH
+        self.default_traversal_path = default_traversal_path
 
         # axis 0 is the batch
         self._default_channel_axis = 1
@@ -86,15 +82,8 @@ class ImageTorchEncoder(Executor):
         ])
 
     def _extract_feature_from_torch_module(self, model: nn.Module):
-        # TODO: Find better way to extract the correct layer from the torch model.
-        if hasattr(model, 'features'):
-            return model.features.eval()
-        elif hasattr(model, 'fc'):
-            return model.eval()
-        elif hasattr(model, 'layers'):
-            return model.layers.eval()
-        else:
-            raise ValueError(f'Model {model.__class__.__name__} is currently not supported by the ImageTorchEncoder')
+        layer_name = get_layer_attribute_for_model(self.model_name)
+        return getattr(model, layer_name)
 
     def _get_features(self, content):
         return self.model(content)
@@ -113,18 +102,13 @@ class ImageTorchEncoder(Executor):
         :param kwargs: Additional key value arguments.
         """
         if docs:
-            docs_batch_generator = self._get_docs_batch_generator(docs, parameters)
+            docs_batch_generator = get_docs_batch_generator(
+                docs,
+                traversal_path=parameters.get('traversal_paths', self.default_traversal_path),
+                batch_size=parameters.get('batch_size', self.default_batch_size),
+                needs_attr='text'
+            )
             self._compute_embeddings(docs_batch_generator)
-
-    def _get_docs_batch_generator(self, docs: DocumentArray, parameters: Dict):
-        traversal_path = parameters.get('traversal_path', self.default_traversal_path)
-        batch_size = parameters.get('batch_size', self.default_batch_size)
-
-        flat_docs = docs.traverse_flat(traversal_path)
-
-        filtered_docs = [doc for doc in flat_docs if doc is not None and doc.blob is not None]
-
-        return _batch_generator(filtered_docs, batch_size)
 
     def _compute_embeddings(self, docs_batch_generator: Iterable) -> None:
         with torch.no_grad():
