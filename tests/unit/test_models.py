@@ -21,16 +21,12 @@ def test_is_model_supported(model_name: str, is_supported: bool):
 @pytest.mark.parametrize(
     ['model_name', 'layer'],
     [
-        ('ResNet', 'layer4'),
-        ('AlexNet', 'features'),
-        ('VGG', 'features'),
-        ('SqueezeNet', 'features'),
-        ('Inception3', 'Mixed_7c'),
-        ('DenseNet', 'features'),
-        ('googlenet', 'inception5b'),
+        ('alexnet', 'features'),
+        ('vgg11', 'features'),
+        ('squeezenet1_0', 'features'),
+        ('densenet121', 'features'),
         ('mnasnet0_5', 'layers'),
         ('mobilenet_v2', 'features'),
-        ('ShuffleNetV2', 'conv5')
     ]
 )
 def test_is_correct_layer(model_name: str, layer: str):

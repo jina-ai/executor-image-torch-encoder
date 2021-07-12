@@ -8,6 +8,7 @@ import numpy as np
 import torchvision.transforms as T
 import torch
 import torch.nn as nn
+import torchvision.models as models
 from jina import Executor, requests, DocumentArray
 from jina_commons.batching import get_docs_batch_generator
 
@@ -39,7 +40,7 @@ class ImageTorchEncoder(Executor):
 
     def __init__(
         self,
-        model_name: str = 'resnet18',
+        model_name: str = 'mobilenet_v2',
         device: Optional[str] = None,
         default_traversal_path: Tuple = ('r', ),
         default_batch_size: Optional[int] = 32,
@@ -66,7 +67,7 @@ class ImageTorchEncoder(Executor):
         self.model = self._extract_feature_from_torch_module(model)
         self.model.to(torch.device(self.device))
 
-        self._pooling_layer = nn.AdaptiveAvgPool2d(output_size=(1, 1))
+        self._pooling_layer = nn.AdaptiveAvgPool2d(1)
         self._pooling_layer.to(torch.device(self.device))
         self._pooling_function = lambda x: self._pooling_layer(x).squeeze(3).squeeze(2)
 

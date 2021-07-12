@@ -34,9 +34,9 @@ def test_preprocessing_reshape_correct(
 @pytest.mark.parametrize(
     'feature_map',
     [
-        np.ones((1, 10, 3, 3)),
-        np.random.rand(1, 10, 3, 3),
-        np.zeros((1, 5, 50, 55))
+        np.ones((1, 10, 10, 3)),
+        np.random.rand(1, 224, 224, 3),
+        np.zeros((1, 100, 100, 3))
     ]
 )
 def test_get_pooling(
@@ -44,7 +44,7 @@ def test_get_pooling(
 ):
     encoder = ImageTorchEncoder()
 
-    feature_map_after_pooling = encoder._get_pooling(feature_map)
+    feature_map_after_pooling = encoder._get_pooling(torch.from_numpy(feature_map))
 
     np.testing.assert_array_almost_equal(feature_map_after_pooling, np.mean(feature_map, axis=(2, 3)))
 
@@ -66,32 +66,31 @@ def test_get_features_cpu():
 
     encodings = encoder._get_features(torch.from_numpy(arr_in)).detach().numpy()
 
-    assert encodings.shape == (2, 1000)
+    assert encodings.shape == (2, 1280, 1, 1)
 
 
 @pytest.mark.parametrize(
     'traversal_path, docs',
     [
-        (['r'], pytest.lazy_fixture('docs_with_blobs')),
-        (['c'], pytest.lazy_fixture('docs_with_chunk_blobs'))
+        (('r', ), pytest.lazy_fixture('docs_with_blobs')),
+        (('c', ), pytest.lazy_fixture('docs_with_chunk_blobs'))
     ]
 )
-def test_encode_image_returns_correct_length(traversal_path: List[str], docs: DocumentArray) -> None:
+def test_encode_image_returns_correct_length(traversal_path: Tuple[str], docs: DocumentArray) -> None:
     encoder = ImageTorchEncoder(default_traversal_path=traversal_path)
 
     encoder.encode(docs=docs, parameters={})
 
     for doc in docs.traverse_flat(traversal_path):
         assert doc.embedding is not None
-        assert doc.embedding.shape == (1000, )
+        assert doc.embedding.shape == (1280, )
 
 
 @pytest.mark.parametrize(
     'model_name',
     [
-        'resnet18',
-        'resnet50',
-        'inception_v3'
+        'densenet169',
+        'mobilenet_v3_large',
     ]
 )
 def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: str):
@@ -122,10 +121,9 @@ def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: 
 
 def test_no_preprocessing():
     encoder = ImageTorchEncoder(use_default_preprocessing=False)
-    arr_in = np.ones((3, 224, 224), dtype=np.float32)
+    arr_in = np.ones((224, 224, 3), dtype=np.float32)
     docs = DocumentArray([Document(blob=arr_in)])
 
     encoder.encode(docs=docs, parameters={})
 
     assert docs[0].embedding.shape == (1000, )
-
