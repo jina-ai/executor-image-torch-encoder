@@ -27,10 +27,10 @@ class ImageTorchEncoder(Executor):
     https://pytorch.org/docs/stable/torchvision/models.html
 
     :param model_name: the name of the model. Supported models include
-        ``resnet18``, ``alexnet``, `squeezenet1_0``,  ``vgg16``,
+        ``alexnet``, `squeezenet1_0``,  ``vgg16``,
         ``densenet161``, ``inception_v3``, ``googlenet``,
-        ``shufflenet_v2_x1_0``, ``mobilenet_v2``, ``resnext50_32x4d``,
-        ``wide_resnet50_2``, ``mnasnet1_0``
+        ``shufflenet_v2_x1_0``, ``mobilenet_v2``,
+        ``mnasnet1_0``
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
     :param default_traversal_path: Used in the encode method an defines traversal on the received `DocumentArray`
     :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
@@ -119,13 +119,17 @@ class ImageTorchEncoder(Executor):
                     images = np.stack(self._preprocess_image(blob_batch))
                 else:
                     images = np.stack(blob_batch)
-                tensor = torch.from_numpy(images).to(self.device)
-                features = self._get_features(tensor)
-                features = self._get_pooling(features)
-                features = features.detach().cpu().numpy()
+                features = self._get_embeddings(images)
 
                 for doc, embed in zip(document_batch, features):
                     doc.embedding = embed
+
+    def _get_embeddings(self, images: np.ndarray) -> np.ndarray:
+        tensor = torch.from_numpy(images).to(self.device)
+        features = self._get_features(tensor)
+        features = self._get_pooling(features)
+        features = features.detach().cpu().numpy()
+        return features
 
     def _preprocess_image(self, images: List[np.array]) -> List[np.ndarray]:
         return [self._preprocess(img) for img in images]
