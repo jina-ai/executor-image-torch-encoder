@@ -9,7 +9,11 @@ import torch
 import numpy as np
 from jina import DocumentArray, Document
 
-from jinahub.image.encoder import ImageTorchEncoder
+
+try:
+    from torch_encoder import ImageTorchEncoder
+except:
+    from jinahub.image.encoder import ImageTorchEncoder
 
 
 @pytest.mark.parametrize(
@@ -70,18 +74,18 @@ def test_get_features_cpu():
 
 
 @pytest.mark.parametrize(
-    'traversal_path, docs',
+    'traversal_paths, docs',
     [
         (('r', ), pytest.lazy_fixture('docs_with_blobs')),
         (('c', ), pytest.lazy_fixture('docs_with_chunk_blobs'))
     ]
 )
-def test_encode_image_returns_correct_length(traversal_path: Tuple[str], docs: DocumentArray) -> None:
-    encoder = ImageTorchEncoder(default_traversal_path=traversal_path)
+def test_encode_image_returns_correct_length(traversal_paths: List[str], docs: DocumentArray) -> None:
+    encoder = ImageTorchEncoder(default_traversal_paths=traversal_paths)
 
     encoder.encode(docs=docs, parameters={})
 
-    for doc in docs.traverse_flat(traversal_path):
+    for doc in docs.traverse_flat(traversal_paths):
         assert doc.embedding is not None
         assert doc.embedding.shape == (1280, )
 

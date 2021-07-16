@@ -3,13 +3,15 @@ __license__ = "Apache-2.0"
 
 from typing import List
 
+import numpy as np
 import pytest
-
-from jinahub.image.encoder import ImageTorchEncoder
 
 from jina import Flow, Document, DocumentArray
 
-import numpy as np
+try:
+    from torch_encoder import ImageTorchEncoder
+except:
+    from jinahub.image.encoder import ImageTorchEncoder
 
 
 @pytest.mark.parametrize('arr_in', [
@@ -46,18 +48,19 @@ def test_with_batch():
 
 
 @pytest.mark.parametrize(
-    ['docs', 'docs_per_path', 'traversal_path'],
+    ['docs', 'docs_per_path', 'traversal_paths'],
     [
         (pytest.lazy_fixture('docs_with_blobs'), [['r', 11], ['c', 0], ['cc', 0]], 'r'),
         (pytest.lazy_fixture('docs_with_chunk_blobs'), [['r', 0], ['c', 11], ['cc', 0]], 'c'),
         (pytest.lazy_fixture('docs_with_chunk_chunk_blobs'), [['r', 0], ['c', 0], ['cc', 11]], 'cc')
     ]
 )
-def test_traversal_path(docs: DocumentArray, docs_per_path: List[List[str]], traversal_path: str):
+def test_traversal_paths(docs: DocumentArray, docs_per_path: List[List[str]], traversal_paths: str):
     def validate_traversal(expected_docs_per_path: List[List[str]]):
         def validate(res):
             for path, count in expected_docs_per_path:
                 return len(DocumentArray(res[0].docs).traverse_flat([path]).get_attributes('embedding')) == count
+
         return validate
 
     flow = Flow().add(uses=ImageTorchEncoder)
@@ -66,7 +69,7 @@ def test_traversal_path(docs: DocumentArray, docs_per_path: List[List[str]], tra
         resp = flow.post(
             on='/test',
             inputs=docs,
-            parameters={'traversal_path': [traversal_path]},
+            parameters={'traversal_paths': [traversal_paths]},
             return_results=True
         )
 

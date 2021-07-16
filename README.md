@@ -55,7 +55,7 @@ pip install git+https://github.com/jina-ai/executor-image-torch-encoder.git
 ```
 2. Use the `ImageTorchEncoder` in your code
 ```python
-from jinahub.image.encoder import ImageTorchEncoder
+from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
 from jina import Flow
 
 f = Flow().add(uses=ImageTorchEncoder)
@@ -64,7 +64,8 @@ f = Flow().add(uses=ImageTorchEncoder)
 ### 🐳 Via Docker
 1. Clone the repo and build the docker image
 ```bash
-git clone https://github.com/jina-ai/executor-text-paddle.git
+git clone https://github.com/jina-ai/executor-image-torch-encoder/
+
 cd executor-image-torch-encoder 
 docker build -t jinahub-image-torch-encoder .
 ```
@@ -98,6 +99,25 @@ doc = Document(blob=np.ones((224, 224, 3), dtype=np.uint8))
 with f:
     resp = f.post(on='/index', inputs=doc, return_results=True)
     print(f'{resp}')
+    
+    
+print('\n\nembedding:\n\n', resp[0].docs[0].embedding)
+```
+
+Example using the class the class `ImageTorchEncoder` directly
+
+```python
+import numpy as np
+
+from jina import Document, DocumentArray
+from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
+
+doc = Document(blob=np.ones((224, 224, 3), dtype=np.uint8))
+encoder = ImageTorchEncoder()
+doc_array = DocumentArray([doc, doc])
+encoder.encode(doc_array, parameters={})
+list_embeddings = doc_array.get_attributes('embedding')
+list_embeddings[0].shape, list_embeddings[1].shape
 ```
 
 ### Inputs 

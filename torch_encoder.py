@@ -9,6 +9,7 @@ import torchvision.transforms as T
 import torch
 import torch.nn as nn
 import torchvision.models as models
+
 from jina import Executor, requests, DocumentArray
 from jina_commons.batching import get_docs_batch_generator
 
@@ -32,12 +33,11 @@ class ImageTorchEncoder(Executor):
         ``shufflenet_v2_x1_0``, ``mobilenet_v2``,
         ``mnasnet1_0``
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
-    :param default_traversal_path: Used in the encode method an defines traversal on the received `DocumentArray`
+    :param default_traversal_paths: Used in the encode method an defines traversal on the received `DocumentArray`
     :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
     :param args:  Additional positional arguments
     :param kwargs: Additional keyword arguments
     """
-
     def __init__(
         self,
         model_name: str = 'mobilenet_v2',
