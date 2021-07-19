@@ -90,15 +90,8 @@ def test_encode_image_returns_correct_length(traversal_paths: Tuple[str], docs: 
         assert doc.embedding.shape == (1280, )
 
 
-@pytest.mark.parametrize(
-    'model_name',
-    [
-        'densenet169',
-        'mobilenet_v3_large',
-    ]
-)
-def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: str):
-    encoder = ImageTorchEncoder(model_name=model_name)
+def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
+    encoder = ImageTorchEncoder(model_name='mobilenet_v3_large')
     embeddings = {}
 
     for name, image_arr in test_images.items():
