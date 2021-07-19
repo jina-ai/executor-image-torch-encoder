@@ -5,7 +5,6 @@ from typing import Tuple, Dict
 
 import pytest
 
-import torch
 import numpy as np
 from jina import DocumentArray, Document
 
@@ -36,44 +35,6 @@ def test_preprocessing_reshape_correct(
 
 
 @pytest.mark.parametrize(
-    'feature_map',
-    [
-        np.ones((1, 10, 10, 3)),
-        np.random.rand(1, 224, 224, 3),
-        np.zeros((1, 100, 100, 3))
-    ]
-)
-def test_get_pooling(
-    feature_map: np.ndarray,
-):
-    encoder = ImageTorchEncoder()
-
-    feature_map_after_pooling = encoder._get_pooling(torch.from_numpy(feature_map))
-
-    np.testing.assert_array_almost_equal(feature_map_after_pooling, np.mean(feature_map, axis=(2, 3)))
-
-
-@pytest.mark.skipif(not torch.cuda.is_available(),
-                    reason='requires GPU and CUDA')
-def test_get_features_gpu():
-    encoder = ImageTorchEncoder()
-    arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
-
-    encodings = encoder._get_features(torch.from_numpy(arr_in).to(encoder.device)).detach().cpu().numpy()
-
-    assert encodings.shape == (2, 1280, 1, 1)
-
-
-def test_get_features_cpu():
-    encoder = ImageTorchEncoder(device='cpu')
-    arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
-
-    encodings = encoder._get_features(torch.from_numpy(arr_in)).detach().numpy()
-
-    assert encodings.shape == (2, 1280, 1, 1)
-
-
-@pytest.mark.parametrize(
     'traversal_paths, docs',
     [
         (('r', ), pytest.lazy_fixture('docs_with_blobs')),
@@ -90,8 +51,15 @@ def test_encode_image_returns_correct_length(traversal_paths: Tuple[str], docs: 
         assert doc.embedding.shape == (1280, )
 
 
-def test_encodes_semantic_meaning(test_images: Dict[str, np.array]):
-    encoder = ImageTorchEncoder(model_name='mobilenet_v3_large')
+@pytest.mark.parametrize(
+    'model_name',
+    [
+        'resnet50',
+        'mobilenet_v3_large',
+    ]
+)
+def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: str):
+    encoder = ImageTorchEncoder(model_name=model_name)
     embeddings = {}
 
     for name, image_arr in test_images.items():

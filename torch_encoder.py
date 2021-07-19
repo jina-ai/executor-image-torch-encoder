@@ -13,7 +13,7 @@ import torchvision.models as models
 from jina import Executor, requests, DocumentArray
 from jina_commons.batching import get_docs_batch_generator
 
-from jinahub.image.encoder.models import get_layer_attribute_for_model
+from jinahub.image.encoder.models import EmbeddingModelWrapper
 
 
 class ImageTorchEncoder(Executor):
@@ -60,16 +60,8 @@ class ImageTorchEncoder(Executor):
 
         # axis 0 is the batch
         self._default_channel_axis = 1
-        self.model_name = model_name
 
-        model = getattr(models, self.model_name)(pretrained=True)
-
-        self.model = self._extract_feature_from_torch_module(model)
-        self.model.to(torch.device(self.device))
-
-        self._pooling_layer = nn.AdaptiveAvgPool2d(1)
-        self._pooling_layer.to(torch.device(self.device))
-        self._pooling_function = lambda x: self._pooling_layer(x).squeeze(3).squeeze(2)
+        self.model_wrapper = EmbeddingModelWrapper(model_name)
 
         self._preprocess = T.Compose([
             T.ToPILImage(),
@@ -81,16 +73,6 @@ class ImageTorchEncoder(Executor):
                 std=[0.229, 0.224, 0.225]
             )
         ])
-
-    def _extract_feature_from_torch_module(self, model: nn.Module):
-        layer_name = get_layer_attribute_for_model(self.model_name)
-        return getattr(model, layer_name)
-
-    def _get_features(self, content):
-        return self.model(content)
-
-    def _get_pooling(self, feature_map: 'torch.Tensor') -> 'torch.Tensor':
-        return self._pooling_function(feature_map)
 
     @requests
     def encode(self, docs: Optional[DocumentArray], parameters: Dict, **kwargs):
@@ -119,17 +101,10 @@ class ImageTorchEncoder(Executor):
                     images = np.stack(self._preprocess_image(blob_batch))
                 else:
                     images = np.stack(blob_batch)
-                features = self._get_embeddings(images)
+                features = self.model_wrapper.compute_embeddings(images)
 
                 for doc, embed in zip(document_batch, features):
                     doc.embedding = embed
-
-    def _get_embeddings(self, images: np.ndarray) -> np.ndarray:
-        tensor = torch.from_numpy(images).to(self.device)
-        features = self._get_features(tensor)
-        features = self._get_pooling(features)
-        features = features.detach().cpu().numpy()
-        return features
 
     def _preprocess_image(self, images: List[np.array]) -> List[np.ndarray]:
         return [self._preprocess(img) for img in images]
