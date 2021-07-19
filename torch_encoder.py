@@ -67,7 +67,7 @@ class ImageTorchEncoder(Executor):
         self.model = self._extract_feature_from_torch_module(model)
         self.model.to(torch.device(self.device))
 
-        self._pooling_layer = nn.AdaptiveAvgPool2d(1)
+        self._pooling_layer = nn.AdaptiveAvgPool2d(output_size=(1, 1))
         self._pooling_layer.to(torch.device(self.device))
         self._pooling_function = lambda x: self._pooling_layer(x).squeeze(3).squeeze(2)
 
@@ -133,4 +133,3 @@ class ImageTorchEncoder(Executor):
 
     def _preprocess_image(self, images: List[np.array]) -> List[np.ndarray]:
         return [self._preprocess(img) for img in images]
-
