@@ -34,11 +34,11 @@ class EmbeddingModelWrapper:
 
         self.device = device
 
-        self._pooling_layer = nn.AdaptiveAvgPool2d(1)
+        self._pooling_layer = nn.AdaptiveAvgPool2d(output_size=(1, 1))
         self._pooling_layer.to(torch.device(self.device))
 
     def _pooling_function(self, tensor_in: 'torch.Tensor') -> 'torch.Tensor':
-        return self._pooling_layer(tensor_in).squeeze(3).squeeze(2)
+        return torch.flatten(self._pooling_layer(tensor_in), 1)
 
     def get_features(self, content: 'torch.Tensor') -> 'torch.Tensor':
         feature_map = None
