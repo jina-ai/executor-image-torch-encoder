@@ -1,7 +1,7 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict
 
 import pytest
 
@@ -13,7 +13,7 @@ from jina import DocumentArray, Document
 try:
     from torch_encoder import ImageTorchEncoder
 except:
-    from jinahub.image.encoder import ImageTorchEncoder
+    from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
 
 
 @pytest.mark.parametrize(
@@ -80,8 +80,8 @@ def test_get_features_cpu():
         (('c', ), pytest.lazy_fixture('docs_with_chunk_blobs'))
     ]
 )
-def test_encode_image_returns_correct_length(traversal_paths: List[str], docs: DocumentArray) -> None:
-    encoder = ImageTorchEncoder(default_traversal_paths=traversal_paths)
+def test_encode_image_returns_correct_length(traversal_paths: Tuple[str], docs: DocumentArray) -> None:
+    encoder = ImageTorchEncoder(default_traversal_path=traversal_paths)
 
     encoder.encode(docs=docs, parameters={})
 
@@ -125,9 +125,11 @@ def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: 
 
 def test_no_preprocessing():
     encoder = ImageTorchEncoder(use_default_preprocessing=False)
-    arr_in = np.ones((224, 224, 3), dtype=np.float32)
+
+    # without pre-processing the user needs to provide the right shape for the model directly
+    arr_in = np.ones((3, 224, 224), dtype=np.float32)
     docs = DocumentArray([Document(blob=arr_in)])
 
     encoder.encode(docs=docs, parameters={})
 
-    assert docs[0].embedding.shape == (1000, )
+    assert docs[0].embedding.shape == (1280, )

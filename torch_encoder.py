@@ -13,7 +13,7 @@ import torchvision.models as models
 from jina import Executor, requests, DocumentArray
 from jina_commons.batching import get_docs_batch_generator
 
-from jinahub.image.models import get_layer_attribute_for_model
+from jinahub.image.encoder.models import get_layer_attribute_for_model
 
 
 class ImageTorchEncoder(Executor):

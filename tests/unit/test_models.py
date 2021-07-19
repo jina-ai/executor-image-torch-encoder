@@ -2,13 +2,13 @@
 
 import pytest
 
-from jinahub.image.models import get_layer_attribute_for_model, is_model_supported
+from jinahub.image.encoder.models import get_layer_attribute_for_model, is_model_supported
 
 
 @pytest.mark.parametrize(
     ['model_name', 'is_supported'],
     [
-        ('resnet18', True),
+        ('resnet18', False),
         ('alexnet', True),
         ('xResNet', False),
         ('Alexnet', False)
