@@ -1,5 +1,4 @@
 """ Helper module to manage torch vision models """
-from collections import namedtuple
 from typing import Optional
 
 import torch
@@ -30,7 +29,7 @@ class EmbeddingModelWrapper:
         if not device:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        self._model_descriptor = _ModelCatalogue.get_descriptor(model_name)
+        self._layer_name = _ModelCatalogue.get_layer_name(model_name)
         self._model = getattr(models, model_name)(pretrained=True)
 
         self.device = device
@@ -42,22 +41,17 @@ class EmbeddingModelWrapper:
         return self._pooling_layer(tensor_in).squeeze(3).squeeze(2)
 
     def get_features(self, content: 'torch.Tensor') -> 'torch.Tensor':
-        if self._model_descriptor.needs_forward_hook:
-            feature_map = None
+        feature_map = None
 
-            def get_activations(model, model_input, output):
-                nonlocal feature_map
-                feature_map = output.detach()
+        def get_activations(model, model_input, output):
+            nonlocal feature_map
+            feature_map = output.detach()
 
-            layer = getattr(self._model, self._model_descriptor.layer_name)
-            handle = layer.register_forward_hook(get_activations)
-            self._model(content)
-            handle.remove()
-            return feature_map
-        else:
-            forward_function = getattr(self._model, self._model_descriptor.layer_name)
-            feature_map = forward_function(content)
-            return feature_map
+        layer = getattr(self._model, self._layer_name)
+        handle = layer.register_forward_hook(get_activations)
+        self._model(content)
+        handle.remove()
+        return feature_map
 
     def compute_embeddings(self, images: 'np.ndarray') -> 'np.ndarray':
         tensor = torch.from_numpy(images).to(self.device)
@@ -68,24 +62,18 @@ class EmbeddingModelWrapper:
 
 
 class _ModelCatalogue:
-
-    EmbeddingLayerDescriptor = namedtuple(
-        'EmbeddingLayerDescriptor',
-        'layer_name, needs_forward_hook'
-    )
-
     # maps the tuple of available model names to the layer from which we want to
     # extract the embedding. Removes the first entry because it the model class
     # not the factory method.
     all_supported_models_to_layer_mapping = {
-        tuple(all_resnet_models[1:]): EmbeddingLayerDescriptor('layer4', True),
-        tuple(all_alexnet_models[1:]): EmbeddingLayerDescriptor('features', False),
-        tuple(all_vgg_models[1:]): EmbeddingLayerDescriptor('features', False),
-        tuple(all_squeezenet_models[1:]): EmbeddingLayerDescriptor('features', False),
-        tuple(all_densenet_models[1:]): EmbeddingLayerDescriptor('features', False),
-        tuple(all_mnasnet_models[1:]): EmbeddingLayerDescriptor('layers', False),
-        tuple(all_mobilenet_models[1:]): EmbeddingLayerDescriptor('features', False),
-        tuple(all_googlenet_models[1:]): EmbeddingLayerDescriptor('inception5b', True),
+        tuple(all_resnet_models[1:]): 'layer4',
+        tuple(all_alexnet_models[1:]): 'features',
+        tuple(all_vgg_models[1:]): 'features',
+        tuple(all_squeezenet_models[1:]): 'features',
+        tuple(all_densenet_models[1:]): 'features',
+        tuple(all_mnasnet_models[1:]): 'layers',
+        tuple(all_mobilenet_models[1:]): 'features',
+        tuple(all_googlenet_models[1:]): 'inception5b',
     }
 
     @classmethod
@@ -93,7 +81,7 @@ class _ModelCatalogue:
         return any([model_name in m for m in cls.all_supported_models_to_layer_mapping])
 
     @classmethod
-    def get_descriptor(cls, model_name: str) -> EmbeddingLayerDescriptor:
+    def get_layer_name(cls, model_name: str) -> str:
         """
         Checks if model is supported and returns the lookup on the layer name.
 
@@ -103,6 +91,6 @@ class _ModelCatalogue:
             raise ValueError(f'Model with name {model_name} is not supported. '
                              f'Supported models are: {cls.all_supported_models_to_layer_mapping.keys()}')
 
-        for model_names, layer_descriptor in cls.all_supported_models_to_layer_mapping.items():
+        for model_names, layer_name in cls.all_supported_models_to_layer_mapping.items():
             if model_name in model_names:
-                return layer_descriptor
+                return layer_name

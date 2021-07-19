@@ -35,7 +35,7 @@ def test_is_model_supported(model_name: str, is_supported: bool):
     ]
 )
 def test_is_correct_layer(model_name: str, layer: str):
-    assert _ModelCatalogue.get_descriptor(model_name).layer_name == layer
+    assert _ModelCatalogue.get_layer_name(model_name) == layer
 
 
 @pytest.mark.parametrize(
