@@ -95,3 +95,21 @@ def test_no_preprocessing():
     encoder.encode(docs=docs, parameters={})
 
     assert docs[0].embedding.shape == (1280, )
+
+
+def test_empty_doc_array():
+    docs = DocumentArray()
+    encoder = ImageTorchEncoder()
+
+    encoder.encode(docs, parameters={})
+
+    assert len(docs) == 0
+
+
+def test_docs_array_with_no_text():
+    docs = DocumentArray([Document(text='hello world')])
+    encoder = ImageTorchEncoder()
+
+    encoder.encode(docs, parameters={})
+
+    assert docs[0].embedding is None
