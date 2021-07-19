@@ -11,15 +11,16 @@ from jina import DocumentArray, Document
 try:
     from torch_encoder import ImageTorchEncoder
 except:
-    from jinahub.image.encoder import ImageTorchEncoder
+    from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
 
 
 MODELS_TO_TEST = [
     'mobilenet_v2',
-    'resnet18',
     'squeezenet1_0',
-    'inception_v3',
-    'shufflenet_v2_x0_5'
+    'alexnet',
+    'vgg11',
+    'densenet121',
+    'mnasnet0_5',
 ]
 
 

@@ -11,7 +11,7 @@ from jina import Flow, Document, DocumentArray
 try:
     from torch_encoder import ImageTorchEncoder
 except:
-    from jinahub.image.encoder import ImageTorchEncoder
+    from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
 
 
 @pytest.mark.parametrize('arr_in', [
@@ -31,7 +31,7 @@ def test_no_batch(arr_in: np.ndarray):
     results_arr = DocumentArray(resp[0].data.docs)
     assert len(results_arr) == 1
     assert results_arr[0].embedding is not None
-    assert results_arr[0].embedding.shape == (1000,)
+    assert results_arr[0].embedding.shape == (1280, )
 
 
 def test_with_batch():
