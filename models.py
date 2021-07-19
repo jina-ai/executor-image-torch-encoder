@@ -21,7 +21,7 @@ _all_supported_models_to_layer_mapping = {
 
 
 def is_model_supported(name: str) -> bool:
-    return sum([name in model_names for model_names in _all_supported_models_to_layer_mapping]) > 0
+    return any([name in m for m in _all_supported_models_to_layer_mapping])
 
 
 def get_layer_attribute_for_model(model_name: str) -> str:
