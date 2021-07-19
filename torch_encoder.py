@@ -7,8 +7,6 @@ import numpy as np
 
 import torchvision.transforms as T
 import torch
-import torch.nn as nn
-import torchvision.models as models
 
 from jina import Executor, requests, DocumentArray
 from jina_commons.batching import get_docs_batch_generator
@@ -108,4 +106,3 @@ class ImageTorchEncoder(Executor):
 
     def _preprocess_image(self, images: List[np.array]) -> List[np.ndarray]:
         return [self._preprocess(img) for img in images]
-

@@ -1,6 +1,6 @@
 """ Helper module to manage torch vision models """
 from collections import namedtuple
-from typing import Callable, Optional
+from typing import Optional
 
 import torch
 import torchvision.models as models
@@ -14,10 +14,18 @@ from torchvision.models.squeezenet import __all__ as all_squeezenet_models
 from torchvision.models.densenet import __all__ as all_densenet_models
 from torchvision.models.mnasnet import __all__ as all_mnasnet_models
 from torchvision.models.mobilenet import __all__ as all_mobilenet_models
+from torchvision.models.googlenet import __all__ as all_googlenet_models
 
 
 class EmbeddingModelWrapper:
+    """
+    The ``EmbeddingModelWrapper`` acts as an unified interface to the `torchvision` models.
+    It hides the model specific logic for computing embeddings from the user.
 
+    :param model_name: Name of the `torchvision` model. Classnames are not allowed, i.e.
+                       use `resnet_18` instead of `ResNet`.
+    :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
+    """
     def __init__(self, model_name: str, device: Optional[str] = None):
         if not device:
             device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -77,6 +85,7 @@ class _ModelCatalogue:
         tuple(all_densenet_models[1:]): EmbeddingLayerDescriptor('features', False),
         tuple(all_mnasnet_models[1:]): EmbeddingLayerDescriptor('layers', False),
         tuple(all_mobilenet_models[1:]): EmbeddingLayerDescriptor('features', False),
+        tuple(all_googlenet_models[1:]): EmbeddingLayerDescriptor('inception5b', True),
     }
 
     @classmethod

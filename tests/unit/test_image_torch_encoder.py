@@ -56,6 +56,7 @@ def test_encode_image_returns_correct_length(traversal_paths: Tuple[str], docs: 
     [
         'resnet50',
         'mobilenet_v3_large',
+        'googlenet'
     ]
 )
 def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: str):

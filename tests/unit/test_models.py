@@ -79,15 +79,15 @@ def test_get_features_gpu():
     wrapper = EmbeddingModelWrapper('mobilenet_v2')
     arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
 
-    encodings = wrapper.get_features(torch.from_numpy(arr_in).to(encoder.device)).detach().cpu().numpy()
+    encodings = wrapper.get_features(torch.from_numpy(arr_in).to(wrapper.device)).detach().cpu().numpy()
 
     assert encodings.shape == (2, 1280, 1, 1)
 
 
 def test_get_features_cpu():
     wrapper = EmbeddingModelWrapper('mobilenet_v2', device='cpu')
-    arr_in = np.ones((2, 3, 10, 10), dtype=np.float32)
+    arr_in = np.ones((2, 3, 224, 224), dtype=np.float32)
 
     encodings = wrapper.get_features(torch.from_numpy(arr_in)).detach().numpy()
 
-    assert encodings.shape == (2, 1280, 1, 1)
+    assert encodings.shape[1] == 1280
