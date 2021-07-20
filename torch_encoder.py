@@ -23,13 +23,13 @@ class ImageTorchEncoder(Executor):
 
     Internally, :class:`ImageTorchEncoder` wraps the models from
     `torchvision.models`.
-    https://pytorch.org/docs/stable/torchvision/models.html
+    https://pytorch.org/vision/stable/models.html
 
     :param model_name: the name of the model. Supported models include
         ``alexnet``, `squeezenet1_0``,  ``vgg16``,
         ``densenet161``, ``inception_v3``, ``googlenet``,
         ``shufflenet_v2_x1_0``, ``mobilenet_v2``,
-        ``mnasnet1_0``
+        ``mnasnet1_0``, ``resnet18``
     :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
     :param default_traversal_paths: Used in the encode method an defines traversal on the received `DocumentArray`
     :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
@@ -38,7 +38,7 @@ class ImageTorchEncoder(Executor):
     """
     def __init__(
         self,
-        model_name: str = 'mobilenet_v2',
+        model_name: str = 'resnet18',
         device: Optional[str] = None,
         default_traversal_path: Tuple = ('r', ),
         default_batch_size: Optional[int] = 32,

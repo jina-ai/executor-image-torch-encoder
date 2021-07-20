@@ -1,0 +1,21 @@
+name: CD
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [ closed ]
+  workflow_dispatch:
+
+jobs:
+  push-hub:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    container:
+      image: jinaai/jina:master-standard
+      options: "--entrypoint /bin/bash"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - id: push
+        run: jina hub push --force ${{ secrets.HUBBLE_UUID }} --secret ${{ secrets.HUBBLE_SECRET }} .
