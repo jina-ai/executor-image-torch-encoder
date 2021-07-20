@@ -48,7 +48,7 @@ def test_encode_image_returns_correct_length(traversal_paths: Tuple[str], docs: 
 
     for doc in docs.traverse_flat(traversal_paths):
         assert doc.embedding is not None
-        assert doc.embedding.shape == (1280, )
+        assert doc.embedding.shape == (512, )
 
 
 @pytest.mark.parametrize(
@@ -94,7 +94,7 @@ def test_no_preprocessing():
 
     encoder.encode(docs=docs, parameters={})
 
-    assert docs[0].embedding.shape == (1280, )
+    assert docs[0].embedding.shape == (512, )
 
 
 def test_empty_doc_array():
