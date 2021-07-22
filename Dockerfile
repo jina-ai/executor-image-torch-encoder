@@ -1,10 +1,8 @@
-FROM jinaai/jina:2.0.9-py37-perf
+FROM jinaai/jina:2.0-py37-perf
 
 RUN apt-get update && apt install -y git
 
-COPY . ./image_torch_encoder/
-WORKDIR ./image_torch_encoder
-
+COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 # setup the workspace
