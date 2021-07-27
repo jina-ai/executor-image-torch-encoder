@@ -1,3 +1,5 @@
+NOT MAINTAINED. MOVED TO https://github.com/jina-ai/executors/tree/main/jinahub/encoders/image/ImageTorchEncoder
+
 # ✨ ImageTorchEncoder
 
 **ImageTorchEncoder** wraps the models from [torchvision](https://pytorch.org/vision/stable/index.html).
