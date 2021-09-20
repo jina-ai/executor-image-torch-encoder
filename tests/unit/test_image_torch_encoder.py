@@ -1,18 +1,18 @@
 __copyright__ = "Copyright (c) 2021 Jina AI Limited. All rights reserved."
 __license__ = "Apache-2.0"
 
-from typing import Tuple, Dict
-
-import pytest
+from pathlib import Path
+from typing import Dict, Tuple
 
 import numpy as np
-from jina import DocumentArray, Document
+import pytest
+from executor.torch_encoder import ImageTorchEncoder
+from jina import Document, DocumentArray, Executor
 
 
-try:
-    from torch_encoder import ImageTorchEncoder
-except:
-    from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
+def test_config():
+    ex = Executor.load_config(str(Path(__file__).parents[2] / 'config.yml'))
+    assert ex.default_batch_size == 32
 
 
 @pytest.mark.parametrize(
@@ -20,45 +20,50 @@ except:
     [
         ([np.ones((10, 10, 3), dtype=np.uint8), (3, 224, 224)]),
         ([np.ones((360, 420, 3), dtype=np.uint8), (3, 224, 224)]),
-        ([np.ones((300, 300, 3), dtype=np.uint8), (3, 224, 224)])
-    ]
+        ([np.ones((300, 300, 3), dtype=np.uint8), (3, 224, 224)]),
+    ],
 )
-def test_preprocessing_reshape_correct(
-        content: np.ndarray,
-        out_shape: Tuple
-):
+def test_preprocessing_reshape_correct(content: np.ndarray, out_shape: Tuple):
     encoder = ImageTorchEncoder()
 
     reshaped_content = encoder._preprocess(content)
 
-    assert reshaped_content.shape == out_shape, f'Expected shape {out_shape} but got {reshaped_content.shape}'
+    assert (
+        reshaped_content.shape == out_shape
+    ), f'Expected shape {out_shape} but got {reshaped_content.shape}'
 
 
 @pytest.mark.parametrize(
     'traversal_paths, docs',
     [
-        (('r', ), pytest.lazy_fixture('docs_with_blobs')),
-        (('c', ), pytest.lazy_fixture('docs_with_chunk_blobs'))
-    ]
+        (('r',), pytest.lazy_fixture('docs_with_blobs')),
+        (('c',), pytest.lazy_fixture('docs_with_chunk_blobs')),
+    ],
 )
-def test_encode_image_returns_correct_length(traversal_paths: Tuple[str], docs: DocumentArray) -> None:
+def test_encode_image_returns_correct_length(
+    traversal_paths: Tuple[str], docs: DocumentArray
+) -> None:
     encoder = ImageTorchEncoder(default_traversal_path=traversal_paths)
 
     encoder.encode(docs=docs, parameters={})
 
     for doc in docs.traverse_flat(traversal_paths):
         assert doc.embedding is not None
-        assert doc.embedding.shape == (512, )
+        assert doc.embedding.shape == (512,)
 
 
-@pytest.mark.parametrize(
-    'model_name',
-    [
-        'resnet50',
-        'mobilenet_v3_large',
-        'googlenet'
-    ]
-)
+@pytest.mark.gpu
+def test_encode_gpu(docs_with_blobs: DocumentArray) -> None:
+    encoder = ImageTorchEncoder(default_traversal_path=('r',), device='cuda')
+
+    encoder.encode(docs=docs_with_blobs, parameters={})
+
+    for doc in docs_with_blobs.traverse_flat(('r',)):
+        assert doc.embedding is not None
+        assert doc.embedding.shape == (512,)
+
+
+@pytest.mark.parametrize('model_name', ['resnet50', 'mobilenet_v3_large', 'googlenet'])
 def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: str):
     encoder = ImageTorchEncoder(model_name=model_name)
     embeddings = {}
@@ -94,7 +99,7 @@ def test_no_preprocessing():
 
     encoder.encode(docs=docs, parameters={})
 
-    assert docs[0].embedding.shape == (512, )
+    assert docs[0].embedding.shape == (512,)
 
 
 def test_empty_doc_array():

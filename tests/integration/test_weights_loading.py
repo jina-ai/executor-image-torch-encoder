@@ -3,13 +3,9 @@ __license__ = "Apache-2.0"
 
 import os
 
-from torch import hub
+from executor.torch_encoder import ImageTorchEncoder
 from pytest_mock import MockerFixture
-
-try:
-    from torch_encoder import ImageTorchEncoder
-except:
-    from jinahub.image.encoder.torch_encoder import ImageTorchEncoder
+from torch import hub
 
 
 def test_load_from_url(tmpdir: str, mocker: MockerFixture) -> None:
@@ -18,5 +14,7 @@ def test_load_from_url(tmpdir: str, mocker: MockerFixture) -> None:
 
     _ = ImageTorchEncoder(model_name='mobilenet_v2')
 
-    assert os.path.isfile(os.path.join(tmpdir, 'hub', 'checkpoints', 'mobilenet_v2-b0353104.pth'))
+    assert os.path.isfile(
+        os.path.join(tmpdir, 'hub', 'checkpoints', 'mobilenet_v2-b0353104.pth')
+    )
     assert spy.call_count == 1

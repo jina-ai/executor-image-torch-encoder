@@ -1,7 +1,4 @@
 jtype: ImageTorchEncoder
-with:
-  {}
 metas:
   py_modules:
-    - models.py
-    - torch_encoder.py
+    - executor/__init__.py
