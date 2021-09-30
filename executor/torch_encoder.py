@@ -83,7 +83,7 @@ class ImageTorchEncoder(Executor):
         """
         if docs:
             docs_batch_generator = docs.batch(
-                traversal_path=parameters.get('traversal_paths', self.traversal_path),
+                traversal_paths=parameters.get('traversal_paths', self.traversal_path),
                 batch_size=parameters.get('batch_size', self.batch_size),
                 require_attr='blob',
             )
