@@ -8,20 +8,21 @@ import torch
 import torchvision.transforms as T
 from jina import DocumentArray, Executor, requests
 from jina.logging.logger import JinaLogger
-from jina_commons.batching import get_docs_batch_generator
 
 from .models import EmbeddingModelWrapper
 
 
 class ImageTorchEncoder(Executor):
     """
-    :class:`ImageTorchEncoder` encodes ``Document`` blobs of type `ndarray` (`float32`) and shape
-    `H x W x C` into `ndarray` of shape `D`.
-    Where `D` is the Dimension of the embedding.
-    If `use_default_preprocessing=False`, the expected input shape is `C x H x W` with `float32` dtype.
+    :class:`ImageTorchEncoder` encodes ``Document`` blobs of type `ndarray` (`float32`)
+    and shape `H x W x C` into `ndarray` of shape `D`, Where `D` is the Dimension of the
+    embedding.
 
-    :class:`ImageTorchEncoder` fills the `embedding` fields of `Documents` with an `ndarray` of shape `embedding_dim`
-    (size depends on the model) with `dtype=float32`.
+    If `use_default_preprocessing=False`, the expected input shape is `C x H x W` with
+    `float32` dtype.
+
+    :class:`ImageTorchEncoder` fills the `embedding` fields of `Documents` with an
+    `ndarray` of shape `embedding_dim` (size depends on the model) with `dtype=float32`.
 
     Internally, :class:`ImageTorchEncoder` wraps the models from
     `torchvision.models`.
@@ -32,8 +33,8 @@ class ImageTorchEncoder(Executor):
         self,
         model_name: str = 'resnet18',
         device: str = 'cpu',
-        default_traversal_path: Tuple = ('r',),
-        default_batch_size: Optional[int] = 32,
+        traversal_paths: Tuple = ('r',),
+        batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
         *args,
         **kwargs,
@@ -45,17 +46,19 @@ class ImageTorchEncoder(Executor):
             ``shufflenet_v2_x1_0``, ``mobilenet_v2``,
             ``mnasnet1_0``, ``resnet18``. See full list above.
         :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
-        :param default_traversal_paths: Used in the encode method an defines traversal on the received `DocumentArray`
-        :param default_batch_size: Defines the batch size for inference on the loaded PyTorch model.
+        :param traversal_paths: Used in the encode method an defines traversal on the
+            received `DocumentArray`
+        :param batch_size: Defines the batch size for inference on the loaded PyTorch
+            model.
         """
         super().__init__(*args, **kwargs)
         self.logger = JinaLogger(self.__class__.__name__)
 
         self.device = device
-        self.default_batch_size = default_batch_size
+        self.batch_size = batch_size
         self.use_default_preprocessing = use_default_preprocessing
 
-        self.default_traversal_path = default_traversal_path
+        self.traversal_paths = traversal_paths
 
         # axis 0 is the batch
         self._default_channel_axis = 1
@@ -75,26 +78,25 @@ class ImageTorchEncoder(Executor):
     @requests
     def encode(self, docs: Optional[DocumentArray], parameters: Dict, **kwargs):
         """
-        Encode image data into a ndarray of `D` as dimension, and fill the embedding of each Document.
+        Encode image data into a ndarray of `D` as dimension, and fill the embedding
+        of each Document.
 
         :param docs: DocumentArray containing images
-        :param parameters: dictionary to define the `traversal_paths` and the `batch_size`. For example,
-               `parameters={'traversal_paths': ['r'], 'batch_size': 10}`.
+        :param parameters: dictionary to define the `traversal_paths` and the
+            `batch_size`. For example,
+            `parameters={'traversal_paths': ['r'], 'batch_size': 10}`.
         :param kwargs: Additional key value arguments.
         """
         if docs:
-            docs_batch_generator = get_docs_batch_generator(
-                docs,
-                traversal_path=parameters.get(
-                    'traversal_paths', self.default_traversal_path
-                ),
-                batch_size=parameters.get('batch_size', self.default_batch_size),
-                needs_attr='blob',
+            docs_batch_generator = docs.batch(
+                traversal_paths=parameters.get('traversal_paths', self.traversal_paths),
+                batch_size=parameters.get('batch_size', self.batch_size),
+                require_attr='blob',
             )
             self._compute_embeddings(docs_batch_generator)
 
     def _compute_embeddings(self, docs_batch_generator: Iterable) -> None:
-        with torch.no_grad():
+        with torch.inference_mode():
             for document_batch in docs_batch_generator:
                 blob_batch = [d.blob for d in document_batch]
                 if self.use_default_preprocessing:
