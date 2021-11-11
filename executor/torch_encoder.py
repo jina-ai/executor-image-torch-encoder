@@ -88,10 +88,11 @@ class ImageTorchEncoder(Executor):
         :param kwargs: Additional key value arguments.
         """
         if docs:
-            docs_batch_generator = docs.batch(
+            docs_batch_generator = docs.traverse_flat(
                 traversal_paths=parameters.get('traversal_paths', self.traversal_paths),
+                filter_fn=lambda doc: len(doc.blob)>0
+            ).batch(
                 batch_size=parameters.get('batch_size', self.batch_size),
-                require_attr='blob',
             )
             self._compute_embeddings(docs_batch_generator)
 
