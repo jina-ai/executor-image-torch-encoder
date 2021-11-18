@@ -70,7 +70,7 @@ def test_traversal_paths(
             for path, count in expected_docs_per_path:
                 embeddings = (
                     DocumentArray(res[0].docs)
-                    .traverse_flat([path])
+                    .traverse_flat(path)
                     .get_attributes('embedding')
                 )
                 return len([em for em in embeddings if em is not None]) == count
@@ -83,7 +83,7 @@ def test_traversal_paths(
         resp = flow.post(
             on='/test',
             inputs=docs,
-            parameters={'traversal_paths': [traversal_paths]},
+            parameters={'traversal_paths': traversal_paths},
             return_results=True,
         )
 

@@ -33,7 +33,7 @@ class ImageTorchEncoder(Executor):
         self,
         model_name: str = 'resnet18',
         device: str = 'cpu',
-        traversal_paths: Tuple = ('r',),
+        traversal_paths: str = 'r',
         batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
         *args,
@@ -84,7 +84,7 @@ class ImageTorchEncoder(Executor):
         :param docs: DocumentArray containing images
         :param parameters: dictionary to define the `traversal_paths` and the
             `batch_size`. For example,
-            `parameters={'traversal_paths': ['r'], 'batch_size': 10}`.
+            `parameters={'traversal_paths': 'r', 'batch_size': 10}`.
         :param kwargs: Additional key value arguments.
         """
         if docs:
