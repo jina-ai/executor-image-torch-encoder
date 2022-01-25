@@ -54,10 +54,9 @@ def test_encode_image_returns_correct_length(
 @pytest.mark.gpu
 def test_encode_gpu(docs_with_tensors: DocumentArray) -> None:
     encoder = ImageTorchEncoder(traversal_paths='@r', device='cuda')
-
     encoder.encode(docs=docs_with_tensors, parameters={})
 
-    for doc in docs_with_tensors.traverse_flat('@r'):
+    for doc in docs_with_tensors['@r']:
         assert doc.embedding is not None
         assert doc.embedding.shape == (512,)
 
