@@ -21,11 +21,10 @@ from jina import Document, DocumentArray, Flow
 def test_no_batch(arr_in: np.ndarray):
     flow = Flow().add(uses=ImageTorchEncoder)
     with flow:
-        resp = flow.post(
-            on='/test', inputs=[Document(blob=arr_in)], return_results=True
+        results_arr = flow.post(
+            on='/test', inputs=[Document(tensor=arr_in)], return_results=True
         )
 
-    results_arr = DocumentArray(resp[0].data.docs)
     assert len(results_arr) == 1
     assert results_arr[0].embedding is not None
     assert results_arr[0].embedding.shape == (512,)
@@ -35,30 +34,30 @@ def test_with_batch():
     flow = Flow().add(uses=ImageTorchEncoder)
 
     with flow:
-        resp = flow.post(
+        da = flow.post(
             on='/test',
             inputs=(
-                Document(blob=np.ones((224, 224, 3), dtype=np.uint8)) for _ in range(25)
+                Document(tensor=np.ones((224, 224, 3), dtype=np.uint8)) for _ in range(25)
             ),
             return_results=True,
         )
 
-    assert len(resp[0].docs.get_attributes('embedding')) == 25
+    assert len(da.embeddings) == 25
 
 
 @pytest.mark.parametrize(
     ['docs', 'docs_per_path', 'traversal_paths'],
     [
-        (pytest.lazy_fixture('docs_with_blobs'), [['r', 11], ['c', 0], ['cc', 0]], 'r'),
+        (pytest.lazy_fixture('docs_with_tensors'), [['@r', 11], ['@c', 0], ['@cc', 0]], '@r'),
         (
-            pytest.lazy_fixture('docs_with_chunk_blobs'),
-            [['r', 0], ['c', 11], ['cc', 0]],
-            'c',
+            pytest.lazy_fixture('docs_with_chunk_tensors'),
+            [['@r', 0], ['@c', 11], ['@cc', 0]],
+            '@c',
         ),
         (
-            pytest.lazy_fixture('docs_with_chunk_chunk_blobs'),
-            [['r', 0], ['c', 0], ['cc', 11]],
-            'cc',
+            pytest.lazy_fixture('docs_with_chunk_tensors'),
+            [['@r', 0], ['@c', 0], ['@cc', 11]],
+            '@cc',
         ),
     ],
 )
@@ -66,28 +65,26 @@ def test_traversal_paths(
     docs: DocumentArray, docs_per_path: List[List[str]], traversal_paths: str
 ):
     def validate_traversal(expected_docs_per_path: List[List[str]]):
-        def validate(res):
+        def validate(docs):
             for path, count in expected_docs_per_path:
-                embeddings = (
-                    DocumentArray(res[0].docs)
-                    .traverse_flat([path])
-                    .get_attributes('embedding')
-                )
-                return len([em for em in embeddings if em is not None]) == count
-
+                embeddings = docs[path].embeddings
+                if embeddings is not None:
+                    return len([em for em in embeddings if em is not None]) == count
+                else:
+                    return count == 0
         return validate
 
     flow = Flow().add(uses=ImageTorchEncoder)
 
     with flow:
-        resp = flow.post(
+        docs = flow.post(
             on='/test',
             inputs=docs,
-            parameters={'traversal_paths': [traversal_paths]},
+            parameters={'traversal_paths': traversal_paths},
             return_results=True,
         )
 
-    assert validate_traversal(docs_per_path)(resp)
+    assert validate_traversal(docs_per_path)(docs)
 
 
 @pytest.mark.gpu

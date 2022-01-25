@@ -9,7 +9,6 @@ import pytest
 from executor.torch_encoder import ImageTorchEncoder
 from jina import Document, DocumentArray, Executor
 
-
 def test_config():
     ex = Executor.load_config(str(Path(__file__).parents[2] / 'config.yml'))
     assert ex.batch_size == 32
@@ -36,8 +35,8 @@ def test_preprocessing_reshape_correct(content: np.ndarray, out_shape: Tuple):
 @pytest.mark.parametrize(
     'traversal_paths, docs',
     [
-        (('r',), pytest.lazy_fixture('docs_with_blobs')),
-        (('c',), pytest.lazy_fixture('docs_with_chunk_blobs')),
+        ('@r', pytest.lazy_fixture('docs_with_tensors')),
+        ('@c', pytest.lazy_fixture('docs_with_chunk_tensors')),
     ],
 )
 def test_encode_image_returns_correct_length(
@@ -47,18 +46,18 @@ def test_encode_image_returns_correct_length(
 
     encoder.encode(docs=docs, parameters={})
 
-    for doc in docs.traverse_flat(traversal_paths):
+    for doc in docs[traversal_paths]:
         assert doc.embedding is not None
         assert doc.embedding.shape == (512,)
 
 
 @pytest.mark.gpu
-def test_encode_gpu(docs_with_blobs: DocumentArray) -> None:
-    encoder = ImageTorchEncoder(traversal_paths=('r',), device='cuda')
+def test_encode_gpu(docs_with_tensors: DocumentArray) -> None:
+    encoder = ImageTorchEncoder(traversal_paths='@r', device='cuda')
 
-    encoder.encode(docs=docs_with_blobs, parameters={})
+    encoder.encode(docs=docs_with_tensors, parameters={})
 
-    for doc in docs_with_blobs.traverse_flat(('r',)):
+    for doc in docs_with_tensors.traverse_flat('@r'):
         assert doc.embedding is not None
         assert doc.embedding.shape == (512,)
 
@@ -69,7 +68,7 @@ def test_encodes_semantic_meaning(test_images: Dict[str, np.array], model_name: 
     embeddings = {}
 
     for name, image_arr in test_images.items():
-        docs = DocumentArray([Document(blob=image_arr)])
+        docs = DocumentArray([Document(tensor=image_arr)])
         encoder.encode(docs, parameters={})
         embeddings[name] = docs[0].embedding
 
@@ -95,7 +94,7 @@ def test_no_preprocessing():
 
     # without pre-processing the user needs to provide the right shape for the model directly
     arr_in = np.ones((3, 224, 224), dtype=np.float32)
-    docs = DocumentArray([Document(blob=arr_in)])
+    docs = DocumentArray([Document(tensor=arr_in)])
 
     encoder.encode(docs=docs, parameters={})
 
