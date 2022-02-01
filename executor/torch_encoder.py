@@ -14,15 +14,18 @@ from .models import EmbeddingModelWrapper
 
 class ImageTorchEncoder(Executor):
     """
-    :class:`ImageTorchEncoder` encodes ``Document`` blobs of type `ndarray` (`float32`)
-    and shape `H x W x C` into `ndarray` of shape `D`, Where `D` is the Dimension of the
+    :class:`ImageTorchEncoder` encodes ``Document`` blobs of type `ndarray` (
+    `float32`)
+    and shape `H x W x C` into `ndarray` of shape `D`, Where `D` is the Dimension
+    of the
     embedding.
 
     If `use_default_preprocessing=False`, the expected input shape is `C x H x W` with
     `float32` dtype.
 
     :class:`ImageTorchEncoder` fills the `embedding` fields of `Documents` with an
-    `ndarray` of shape `embedding_dim` (size depends on the model) with `dtype=float32`.
+    `ndarray` of shape `embedding_dim` (size depends on the model) with
+    `dtype=float32`.
 
     Internally, :class:`ImageTorchEncoder` wraps the models from
     `torchvision.models`.
@@ -30,14 +33,14 @@ class ImageTorchEncoder(Executor):
     """
 
     def __init__(
-        self,
-        model_name: str = 'resnet18',
-        device: str = 'cpu',
-        traversal_paths: Tuple = ('r',),
-        batch_size: Optional[int] = 32,
-        use_default_preprocessing: bool = True,
-        *args,
-        **kwargs,
+            self,
+            model_name: str = 'resnet18',
+            device: str = 'cpu',
+            traversal_paths: Tuple = 'r',
+            batch_size: Optional[int] = 32,
+            use_default_preprocessing: bool = True,
+            *args,
+            **kwargs,
     ):
         """
         :param model_name: the name of the model. Some of the models:
@@ -88,11 +91,16 @@ class ImageTorchEncoder(Executor):
         :param kwargs: Additional key value arguments.
         """
         if docs:
-            docs_batch_generator = docs.batch(
-                traversal_paths=parameters.get('traversal_paths', self.traversal_paths),
+            docs_batch_generator = docs. \
+                traverse_flat(
+                traversal_paths=parameters.get('traversal_paths',
+                                               self.traversal_paths),
+                filter_fn=lambda doc: len(doc.blob) > 0,
+            ). \
+                batch(
                 batch_size=parameters.get('batch_size', self.batch_size),
-                require_attr='blob',
             )
+
             self._compute_embeddings(docs_batch_generator)
 
     def _compute_embeddings(self, docs_batch_generator: Iterable) -> None:

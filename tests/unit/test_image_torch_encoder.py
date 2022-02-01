@@ -36,12 +36,12 @@ def test_preprocessing_reshape_correct(content: np.ndarray, out_shape: Tuple):
 @pytest.mark.parametrize(
     'traversal_paths, docs',
     [
-        (('r',), pytest.lazy_fixture('docs_with_blobs')),
-        (('c',), pytest.lazy_fixture('docs_with_chunk_blobs')),
+        ('r', pytest.lazy_fixture('docs_with_blobs')),
+        ('c', pytest.lazy_fixture('docs_with_chunk_blobs')),
     ],
 )
 def test_encode_image_returns_correct_length(
-    traversal_paths: Tuple[str], docs: DocumentArray
+    traversal_paths: str, docs: DocumentArray
 ) -> None:
     encoder = ImageTorchEncoder(traversal_paths=traversal_paths)
 
@@ -58,7 +58,7 @@ def test_encode_gpu(docs_with_blobs: DocumentArray) -> None:
 
     encoder.encode(docs=docs_with_blobs, parameters={})
 
-    for doc in docs_with_blobs.traverse_flat(('r',)):
+    for doc in docs_with_blobs.traverse_flat('r'):
         assert doc.embedding is not None
         assert doc.embedding.shape == (512,)
 
