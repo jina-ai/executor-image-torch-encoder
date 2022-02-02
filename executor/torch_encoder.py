@@ -33,7 +33,7 @@ class ImageTorchEncoder(Executor):
         self,
         model_name: str = 'resnet18',
         device: str = 'cpu',
-        traversal_paths: Tuple = '@r',
+        traversal_paths: str = '@r',
         batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
         *args,
