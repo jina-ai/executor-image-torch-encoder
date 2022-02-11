@@ -29,31 +29,31 @@ def mobilenet_weights(tmpdir: str) -> str:
 
 
 @pytest.fixture()
-def docs_with_blobs() -> DocumentArray:
+def docs_with_tensors() -> DocumentArray:
     return DocumentArray(
-        [Document(blob=np.ones((10, 10, 3), dtype=np.uint8)) for _ in range(11)]
+        [Document(tensor=np.ones((10, 10, 3), dtype=np.uint8)) for _ in range(11)]
     )
 
 
 @pytest.fixture()
-def docs_with_chunk_blobs() -> DocumentArray:
+def docs_with_chunk_tensors() -> DocumentArray:
     return DocumentArray(
         [
-            Document(chunks=[Document(blob=np.ones((10, 10, 3), dtype=np.uint8))])
+            Document(chunks=[Document(tensor=np.ones((10, 10, 3), dtype=np.uint8))])
             for _ in range(11)
         ]
     )
 
 
 @pytest.fixture()
-def docs_with_chunk_chunk_blobs() -> DocumentArray:
+def docs_with_chunk_chunk_tensors() -> DocumentArray:
     return DocumentArray(
         [
             Document(
                 chunks=[
                     Document(
                         chunks=[
-                            Document(blob=np.ones((10, 10, 3), dtype=np.uint8))
+                            Document(tensor=np.ones((10, 10, 3), dtype=np.uint8))
                             for _ in range(11)
                         ]
                     )

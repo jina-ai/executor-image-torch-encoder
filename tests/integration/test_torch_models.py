@@ -22,7 +22,7 @@ MODELS_TO_TEST = [
 def test_load_torch_models(model_name: str, test_images: Dict[str, np.array]):
     encoder = ImageTorchEncoder(model_name=model_name)
 
-    docs = DocumentArray([Document(blob=img_arr) for img_arr in test_images.values()])
+    docs = DocumentArray([Document(tensor=img_arr) for img_arr in test_images.values()])
     encoder.encode(docs=docs, parameters={})
 
     for doc in docs:

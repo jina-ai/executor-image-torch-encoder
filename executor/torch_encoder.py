@@ -14,7 +14,7 @@ from .models import EmbeddingModelWrapper
 
 class ImageTorchEncoder(Executor):
     """
-    :class:`ImageTorchEncoder` encodes ``Document`` blobs of type `ndarray` (`float32`)
+    :class:`ImageTorchEncoder` encodes ``Document`` tensors of type `ndarray` (`float32`)
     and shape `H x W x C` into `ndarray` of shape `D`, Where `D` is the Dimension of the
     embedding.
 
@@ -33,7 +33,7 @@ class ImageTorchEncoder(Executor):
         self,
         model_name: str = 'resnet18',
         device: str = 'cpu',
-        traversal_paths: Tuple = ('r',),
+        traversal_paths: str = '@r',
         batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
         *args,
@@ -76,7 +76,7 @@ class ImageTorchEncoder(Executor):
         )
 
     @requests
-    def encode(self, docs: Optional[DocumentArray], parameters: Dict, **kwargs):
+    def encode(self, docs: DocumentArray, parameters: Dict, **kwargs):
         """
         Encode image data into a ndarray of `D` as dimension, and fill the embedding
         of each Document.
@@ -88,25 +88,27 @@ class ImageTorchEncoder(Executor):
         :param kwargs: Additional key value arguments.
         """
         if docs:
-            docs_batch_generator = docs.batch(
-                traversal_paths=parameters.get('traversal_paths', self.traversal_paths),
-                batch_size=parameters.get('batch_size', self.batch_size),
-                require_attr='blob',
-            )
+            docs_batch_generator = DocumentArray(
+                filter(
+                    lambda x: x.tensor is not None,
+                    docs[parameters.get('traversal_paths', self.traversal_paths)],
+                )
+            ).batch(batch_size=parameters.get('batch_size', self.batch_size))
+
             self._compute_embeddings(docs_batch_generator)
 
     def _compute_embeddings(self, docs_batch_generator: Iterable) -> None:
         with torch.inference_mode():
             for document_batch in docs_batch_generator:
-                blob_batch = [d.blob for d in document_batch]
+                tensor_batch = [d.tensor for d in document_batch]
                 if self.use_default_preprocessing:
-                    images = np.stack(self._preprocess_image(blob_batch))
+                    images = np.stack(self._preprocess_image(tensor_batch))
                 else:
-                    images = np.stack(blob_batch)
+                    images = np.stack(tensor_batch)
                 features = self.model_wrapper.compute_embeddings(images)
 
-                for doc, embed in zip(document_batch, features):
-                    doc.embedding = embed
+                document_batch.embeddings = features
+
 
     def _preprocess_image(self, images: List[np.array]) -> List[np.ndarray]:
         return [self._preprocess(img) for img in images]
