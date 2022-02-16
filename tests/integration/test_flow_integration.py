@@ -39,7 +39,6 @@ def test_with_batch():
             inputs=(
                 Document(tensor=np.ones((224, 224, 3), dtype=np.uint8)) for _ in range(25)
             ),
-            return_results=True,
         )
 
     assert len(da.embeddings) == 25
@@ -81,7 +80,6 @@ def test_traversal_paths(
             on='/test',
             inputs=docs,
             parameters={'traversal_paths': traversal_paths},
-            return_results=True,
         )
 
     assert validate_traversal(docs_per_path)(docs)
