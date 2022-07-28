@@ -45,7 +45,7 @@ def test_with_batch():
 
 
 @pytest.mark.parametrize(
-    ['docs', 'docs_per_path', 'traversal_paths'],
+    ['docs', 'docs_per_path', 'access_paths'],
     [
         (pytest.lazy_fixture('docs_with_tensors'), [['@r', 11], ['@c', 0], ['@cc', 0]], '@r'),
         (
@@ -60,8 +60,8 @@ def test_with_batch():
         ),
     ],
 )
-def test_traversal_paths(
-    docs: DocumentArray, docs_per_path: List[List[str]], traversal_paths: str
+def test_access_paths(
+    docs: DocumentArray, docs_per_path: List[List[str]], access_paths: str
 ):
     def validate_traversal(expected_docs_per_path: List[List[str]]):
         def validate(docs):
@@ -79,7 +79,7 @@ def test_traversal_paths(
         docs = flow.post(
             on='/test',
             inputs=docs,
-            parameters={'traversal_paths': traversal_paths},
+            parameters={'access_paths': access_paths},
         )
 
     assert validate_traversal(docs_per_path)(docs)

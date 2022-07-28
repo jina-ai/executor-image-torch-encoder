@@ -33,27 +33,27 @@ def test_preprocessing_reshape_correct(content: np.ndarray, out_shape: Tuple):
 
 
 @pytest.mark.parametrize(
-    'traversal_paths, docs',
+    'access_paths, docs',
     [
         ('@r', pytest.lazy_fixture('docs_with_tensors')),
         ('@c', pytest.lazy_fixture('docs_with_chunk_tensors')),
     ],
 )
 def test_encode_image_returns_correct_length(
-    traversal_paths: Tuple[str], docs: DocumentArray
+    access_paths: Tuple[str], docs: DocumentArray
 ) -> None:
-    encoder = ImageTorchEncoder(traversal_paths=traversal_paths)
+    encoder = ImageTorchEncoder(access_paths=access_paths)
 
     encoder.encode(docs=docs, parameters={})
 
-    for doc in docs[traversal_paths]:
+    for doc in docs[access_paths]:
         assert doc.embedding is not None
         assert doc.embedding.shape == (512,)
 
 
 @pytest.mark.gpu
 def test_encode_gpu(docs_with_tensors: DocumentArray) -> None:
-    encoder = ImageTorchEncoder(traversal_paths='@r', device='cuda')
+    encoder = ImageTorchEncoder(access_paths='@r', device='cuda')
     encoder.encode(docs=docs_with_tensors, parameters={})
 
     for doc in docs_with_tensors['@r']:

@@ -10,6 +10,7 @@ from jina import DocumentArray, Executor, requests
 from jina.logging.logger import JinaLogger
 
 from .models import EmbeddingModelWrapper
+import warnings
 
 
 class ImageTorchEncoder(Executor):
@@ -33,7 +34,8 @@ class ImageTorchEncoder(Executor):
         self,
         model_name: str = 'resnet18',
         device: str = 'cpu',
-        traversal_paths: str = '@r',
+        access_paths: str = '@r',
+        traversal_paths: Optional[str] = None,
         batch_size: Optional[int] = 32,
         use_default_preprocessing: bool = True,
         *args,
@@ -46,8 +48,9 @@ class ImageTorchEncoder(Executor):
             ``shufflenet_v2_x1_0``, ``mobilenet_v2``,
             ``mnasnet1_0``, ``resnet18``. See full list above.
         :param device: Which device the model runs on. Can be 'cpu' or 'cuda'
-        :param traversal_paths: Used in the encode method an defines traversal on the
+        :param access_paths: Used in the encode method an defines traversal on the
             received `DocumentArray`
+        :param traversal_paths: please use access_paths
         :param batch_size: Defines the batch size for inference on the loaded PyTorch
             model.
         """
@@ -58,7 +61,13 @@ class ImageTorchEncoder(Executor):
         self.batch_size = batch_size
         self.use_default_preprocessing = use_default_preprocessing
 
-        self.traversal_paths = traversal_paths
+        if traversal_paths is not None:
+            self.access_paths = traversal_paths
+            warnings.warn("'traversal_paths' will be deprecated in the future, please use 'access_paths'.",
+                          DeprecationWarning,
+                          stacklevel=2)
+        else:
+            self.access_paths = access_paths
 
         # axis 0 is the batch
         self._default_channel_axis = 1
@@ -82,16 +91,16 @@ class ImageTorchEncoder(Executor):
         of each Document.
 
         :param docs: DocumentArray containing images
-        :param parameters: dictionary to define the `traversal_paths` and the
+        :param parameters: dictionary to define the `access_paths` and the
             `batch_size`. For example,
-            `parameters={'traversal_paths': ['r'], 'batch_size': 10}`.
+            `parameters={'access_paths': ['r'], 'batch_size': 10}`.
         :param kwargs: Additional key value arguments.
         """
         if docs:
             docs_batch_generator = DocumentArray(
                 filter(
                     lambda x: x.tensor is not None,
-                    docs[parameters.get('traversal_paths', self.traversal_paths)],
+                    docs[parameters.get('access_paths', self.access_paths)],
                 )
             ).batch(batch_size=parameters.get('batch_size', self.batch_size))
 
